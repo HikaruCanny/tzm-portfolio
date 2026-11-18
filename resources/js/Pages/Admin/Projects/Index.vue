@@ -88,22 +88,24 @@ const deleteProject = (id: number) => {
                             <span v-if="proj.is_featured" class="text-indigo-600 dark:text-indigo-400">Yes</span>
                             <span v-else class="text-slate-400">No</span>
                         </td>
-                        <td class="px-6 py-4 text-right space-x-2">
-                            <Link
-                                :href="`/admin/projects/${proj.id}/edit`"
-                                class="p-1.5 text-slate-500 hover:text-indigo-600 inline-block"
-                                title="Edit"
-                            >
-                                <Edit class="w-4 h-4" />
-                            </Link>
-                            <button
-                                @click="deleteProject(proj.id)"
-                                type="button"
-                                class="p-1.5 text-slate-500 hover:text-red-600 inline-block"
-                                title="Delete"
-                            >
-                                <Trash2 class="w-4 h-4" />
-                            </button>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center justify-end gap-1">
+                                <Link
+                                    :href="`/admin/projects/${proj.id}/edit`"
+                                    class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800"
+                                    title="Edit"
+                                >
+                                    <Edit class="h-4 w-4" />
+                                </Link>
+                                <button
+                                    type="button"
+                                    class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                                    title="Delete"
+                                    @click="deleteProject(proj.id)"
+                                >
+                                    <Trash2 class="h-4 w-4" />
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>

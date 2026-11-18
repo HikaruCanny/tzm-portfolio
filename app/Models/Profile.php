@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $name
  * @property string $title
  * @property string|null $bio
+ * @property string|null $goals
+ * @property string|null $working_style
  * @property string|null $photo_path
  * @property string|null $resume_path
  * @property string|null $email
@@ -25,6 +27,8 @@ class Profile extends Model
         'name',
         'title',
         'bio',
+        'goals',
+        'working_style',
         'photo_path',
         'resume_path',
         'email',

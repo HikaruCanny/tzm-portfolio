@@ -55,6 +55,16 @@ interface TestimonialItem {
     quote: string;
 }
 
+interface LatestPost {
+    id: number;
+    title: string;
+    slug: string;
+    excerpt: string;
+    published_at?: string | null;
+    reading_time: number;
+    tags?: Array<{ id: number; name: string; slug: string }>;
+}
+
 interface ExperienceItem {
     id: number;
     type: 'work' | 'education' | 'certification';
@@ -102,6 +112,7 @@ const props = withDefaults(defineProps<{
     categories?: SkillCategory[];
     services?: Service[];
     featuredProjects?: Project[];
+    latestPosts?: LatestPost[];
     testimonials?: TestimonialItem[];
 }>(), {
     profile: () => ({
@@ -113,8 +124,21 @@ const props = withDefaults(defineProps<{
     categories: () => [],
     services: () => [],
     featuredProjects: () => [],
+    latestPosts: () => [],
     testimonials: () => [],
 });
+
+const formatPostDate = (value?: string | null): string => {
+    if (!value) {
+        return '';
+    }
+
+    return new Date(value).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+};
 
 const contactSent = ref(false);
 const slide = ref(0);
@@ -392,6 +416,45 @@ const submitContact = () => {
                 </Reveal>
             </div>
             <p v-else class="mt-8 text-slate-500">No featured projects currently listed.</p>
+        </section>
+
+        <section id="blog" class="scroll-mt-24 px-4 py-20 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-6xl">
+                <Reveal>
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-700 dark:text-indigo-300">Blog</p>
+                            <h2 class="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white">Latest writing</h2>
+                        </div>
+                        <Link href="/blog" class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+                            <span>All articles</span>
+                            <ArrowRight class="h-4 w-4" />
+                        </Link>
+                    </div>
+                </Reveal>
+                <div v-if="props.latestPosts.length" class="mt-8 grid gap-6 md:grid-cols-3">
+                    <Reveal v-for="(post, index) in props.latestPosts" :key="post.id" :delay="index * 120">
+                        <article class="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                            <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                <span v-if="post.published_at" class="inline-flex items-center gap-1">
+                                    <Calendar class="h-3.5 w-3.5" />
+                                    {{ formatPostDate(post.published_at) }}
+                                </span>
+                                <span>{{ post.reading_time }} min read</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                                <Link :href="`/blog/${post.slug}`" class="hover:text-indigo-600">{{ post.title }}</Link>
+                            </h3>
+                            <p class="line-clamp-3 text-sm text-slate-600 dark:text-slate-400">{{ post.excerpt }}</p>
+                            <Link :href="`/blog/${post.slug}`" class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+                                <span>Read</span>
+                                <ArrowRight class="h-4 w-4" />
+                            </Link>
+                        </article>
+                    </Reveal>
+                </div>
+                <p v-else class="mt-8 text-slate-500">No articles published yet.</p>
+            </div>
         </section>
 
         <section id="testimonials" class="scroll-mt-24 px-4 py-20 sm:px-6 lg:px-8">

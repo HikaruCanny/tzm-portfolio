@@ -10,7 +10,6 @@ use App\Models\Service;
 use App\Models\SkillCategory;
 use App\Models\Testimonial;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,19 +22,32 @@ class PortfolioController extends Controller
         return Inertia::render('Welcome', $this->landingProps());
     }
 
-    public function about(): RedirectResponse
+    public function about(): Response
     {
-        return redirect('/#about');
+        return Inertia::render('About', [
+            'profile' => Profile::instance(),
+        ]);
     }
 
-    public function experience(): RedirectResponse
+    public function experience(): Response
     {
-        return redirect('/#experience');
+        return Inertia::render('Experience', [
+            'experiences' => Experience::query()->orderBy('sort_order')->orderByDesc('start_date')->get(),
+        ]);
     }
 
-    public function skills(): RedirectResponse
+    public function skills(): Response
     {
-        return redirect('/#skills');
+        return Inertia::render('Skills', [
+            'categories' => SkillCategory::query()->with('skills')->orderBy('sort_order')->get(),
+        ]);
+    }
+
+    public function services(): Response
+    {
+        return Inertia::render('Services', [
+            'services' => Service::query()->orderBy('sort_order')->get(),
+        ]);
     }
 
     public function resume(): StreamedResponse
@@ -47,11 +59,6 @@ class PortfolioController extends Controller
         }
 
         return Storage::disk('public')->download($profile->resume_path, 'TZM-Resume.pdf');
-    }
-
-    public function services(): RedirectResponse
-    {
-        return redirect('/#services');
     }
 
     /**
@@ -75,13 +82,11 @@ class PortfolioController extends Controller
      */
     private function featuredProjects(): Collection
     {
-        $projects = Project::published()
+        return Project::published()
             ->featured()
             ->with('technologies')
             ->latest('published_at')
             ->take(3)
             ->get();
-
-        return $projects;
     }
 }

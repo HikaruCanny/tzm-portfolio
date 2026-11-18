@@ -2,7 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { ArrowRight, Calendar, Clock, Search } from '@lucide/vue';
+import { ArrowRight, Calendar, Clock, Eye, Search } from '@lucide/vue';
 
 defineOptions({ layout: PublicLayout });
 
@@ -20,6 +20,7 @@ interface PostCard {
     cover_image?: string | null;
     published_at?: string | null;
     reading_time: number;
+    views_count: number;
     tags: Tag[];
 }
 
@@ -54,6 +55,14 @@ const formatDate = (value?: string | null): string => {
     }
 
     return new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const formatViews = (count: number): string => {
+    if (count >= 1000) {
+        return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1).replace(/\.0$/, '')}k`;
+    }
+
+    return String(count);
 };
 </script>
 
@@ -100,38 +109,67 @@ const formatDate = (value?: string | null): string => {
             </form>
         </div>
 
-        <div v-if="posts.data.length" class="space-y-8">
+        <div v-if="posts.data.length" class="space-y-6">
             <article
                 v-for="post in posts.data"
                 :key="post.id"
-                class="space-y-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-indigo-500/50 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:border-indigo-500/50 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
             >
-                <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                <div class="flex flex-col sm:flex-row">
                     <Link
-                        v-for="tag in post.tags"
-                        :key="tag.id"
-                        :href="`/blog/tag/${tag.slug}`"
-                        class="rounded-full bg-indigo-50 px-2.5 py-0.5 font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                        :href="`/blog/${post.slug}`"
+                        class="relative block shrink-0 overflow-hidden bg-slate-100 sm:w-48 md:w-56 dark:bg-slate-800"
                     >
-                        {{ tag.name }}
+                        <img
+                            v-if="post.cover_image"
+                            :src="`/storage/${post.cover_image}`"
+                            :alt="post.title"
+                            class="h-44 w-full object-cover transition-transform duration-300 hover:scale-[1.03] sm:h-full sm:min-h-[10.5rem]"
+                        />
+                        <div
+                            v-else
+                            class="flex h-44 w-full items-center justify-center bg-gradient-to-br from-indigo-100 via-slate-100 to-cyan-100 text-indigo-500 sm:h-full sm:min-h-[10.5rem] dark:from-indigo-950 dark:via-slate-900 dark:to-cyan-950 dark:text-indigo-300"
+                        >
+                            <span class="text-3xl font-extrabold opacity-60">{{ post.title.slice(0, 1) }}</span>
+                        </div>
                     </Link>
-                    <span v-if="post.published_at" class="flex items-center gap-1">
-                        <Calendar class="h-3.5 w-3.5" />
-                        {{ formatDate(post.published_at) }}
-                    </span>
-                    <span class="flex items-center gap-1">
-                        <Clock class="h-3.5 w-3.5" />
-                        {{ post.reading_time }} min read
-                    </span>
+
+                    <div class="flex min-w-0 flex-1 flex-col justify-center space-y-3 p-5 sm:p-6">
+                        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                            <Link
+                                v-for="tag in post.tags"
+                                :key="tag.id"
+                                :href="`/blog/tag/${tag.slug}`"
+                                class="rounded-full bg-indigo-50 px-2.5 py-0.5 font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                            >
+                                {{ tag.name }}
+                            </Link>
+                            <span v-if="post.published_at" class="flex items-center gap-1">
+                                <Calendar class="h-3.5 w-3.5" />
+                                {{ formatDate(post.published_at) }}
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <Clock class="h-3.5 w-3.5" />
+                                {{ post.reading_time }} min read
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <Eye class="h-3.5 w-3.5" />
+                                {{ formatViews(post.views_count) }} views
+                            </span>
+                        </div>
+                        <h2 class="text-xl font-bold text-slate-900 sm:text-2xl dark:text-white">
+                            <Link :href="`/blog/${post.slug}`" class="hover:text-indigo-600">{{ post.title }}</Link>
+                        </h2>
+                        <p class="line-clamp-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ post.excerpt }}</p>
+                        <Link
+                            :href="`/blog/${post.slug}`"
+                            class="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+                        >
+                            <span>Read article</span>
+                            <ArrowRight class="h-4 w-4" />
+                        </Link>
+                    </div>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
-                    <Link :href="`/blog/${post.slug}`" class="hover:text-indigo-600">{{ post.title }}</Link>
-                </h2>
-                <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ post.excerpt }}</p>
-                <Link :href="`/blog/${post.slug}`" class="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
-                    <span>Read article</span>
-                    <ArrowRight class="h-4 w-4" />
-                </Link>
             </article>
         </div>
         <p v-else class="text-slate-500">No articles yet.</p>

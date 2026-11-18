@@ -39,9 +39,11 @@ class BlogController extends Controller
         ]);
     }
 
-    public function show(Post $post): Response
+    public function show(Request $request, Post $post): Response
     {
         abort_unless($post->status === 'published' && $post->published_at !== null, 404);
+
+        $this->recordView($request, $post);
 
         $post->load('tags:id,name,slug');
         $rendered = $this->markdown->render($post->body_markdown);
@@ -74,6 +76,7 @@ class BlogController extends Controller
                 'cover_image' => $post->cover_image,
                 'published_at' => $post->published_at,
                 'reading_time' => $post->reading_time,
+                'views_count' => $post->views_count,
                 'html' => $rendered['html'],
                 'toc' => $rendered['toc'],
                 'tags' => $post->tags,
@@ -113,7 +116,27 @@ class BlogController extends Controller
                 'cover_image' => $post->cover_image,
                 'published_at' => $post->published_at,
                 'reading_time' => $post->reading_time,
+                'views_count' => $post->views_count,
                 'tags' => $post->tags,
             ]);
+    }
+
+    private function recordView(Request $request, Post $post): void
+    {
+        /** @var list<int> $viewed */
+        $viewed = array_map(
+            static fn (mixed $id): int => (int) $id,
+            $request->session()->get('viewed_posts', []),
+        );
+
+        if (in_array($post->id, $viewed, true)) {
+            return;
+        }
+
+        Post::query()->whereKey($post->id)->increment('views_count');
+        $post->views_count = (int) $post->views_count + 1;
+
+        $viewed[] = $post->id;
+        $request->session()->put('viewed_posts', $viewed);
     }
 }

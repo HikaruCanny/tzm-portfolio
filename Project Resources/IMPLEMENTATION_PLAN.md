@@ -1,8 +1,8 @@
 # TZM Portfolio – Implementation Plan (living document)
 
 **Source HLD:** `TZM Portfolio Website – High-Level Design (HLD).md` v1.2  
-**Last codebase audit:** 2026-11-11 (after Phase 1 and Phase 2 implementation)  
-**Test suite:** 66 Pest tests passing (`php artisan test --compact`)
+**Last codebase audit:** 2026-11-18 (Phase 3 + Phase 4 finished)  
+**Test suite:** run `php artisan test --compact` after changes
 
 **Status legend:** `DONE` | `PARTIAL` | `NOT STARTED`
 
@@ -15,17 +15,17 @@
 | 0 | Content & design | PARTIAL | ~20% | Seeded/demo content in UI; no repo checklist artifact |
 | 1 | Foundation | DONE | ~95% | Error pages, blog nav, theme, CI. Staging server deploy is still an ops task |
 | 2 | Data & admin | DONE | ~95% | Invites, roles, technologies, WebP uploads, activity log, superadmin 2FA gate |
-| 3 | Public pages | PARTIAL | ~75% | DB-driven pages; HLD home/blog/testimonials gaps |
-| 4 | Blog | NOT STARTED | ~10% | Static `Blog.vue` / `BlogPost.vue` only |
+| 3 | Public pages | DONE | ~95% | Dedicated About/Experience/Skills/Services/Contact; SEO polish still Phase 7 |
+| 4 | Blog | DONE | ~95% | Posts/tags admin, public blog, RSS, highlighting; real content still Phase 0 |
 | 5 | Contact & notifications | PARTIAL | ~45% | Form + inbox + honeypot; no mail/Reverb/bell |
 | 6 | AI chatbot | NOT STARTED | 0% | — |
 | 7 | Polish & launch | NOT STARTED | ~5% | CI only; no SEO/ops bundle |
 
-**Finished in code:** **Phase 1** and **Phase 2**. Staging hosting is the only Phase 1 item left, and it needs a server. Contact email, live notifications, the blog, and the chatbot are later phases.
+**Finished in code:** **Phase 1**, **Phase 2**, **Phase 3**, and **Phase 4**. Staging hosting is the only Phase 1 item left, and it needs a server.
 
-**Closest unfinished product work:** **Phase 4** (real blog) and **Phase 5** (email and live notifications).
+**Closest unfinished product work:** **Phase 5** (email and live notifications).
 
-**Recommended next work:** finish **Phase 2 gaps** → **Phase 4** → **Phase 5** → minimal **Phase 7** for launch → **Phase 6** optional.
+**Recommended next work:** **Phase 5** → minimal **Phase 7** for launch → **Phase 6** optional.
 
 ---
 
@@ -70,7 +70,7 @@
 | `experiences`, `skill_categories`, `skills` | DONE |
 | `projects`, `project_images`, `technologies`, `project_technology` | DONE (images table; upload UI unclear) |
 | `services`, `contact_messages`, `invitations`, `activity_log` | DONE (migrations) |
-| `posts`, `tags`, `post_tag` | NOT STARTED |
+| `posts`, `tags`, `post_tag` | DONE |
 | `contact_replies` | NOT STARTED |
 | `chat_*`, `knowledge_chunks` | NOT STARTED |
 | `notifications` table | NOT STARTED (model trait on User only) |
@@ -103,7 +103,7 @@
 | Technologies admin CRUD | DONE | `/admin/technologies` |
 | Project image upload + WebP | DONE | `StoresPortfolioImage` |
 | Profile photo and resume upload | DONE | Superadmin profile form; public `/resume` download |
-| Blog admin | NOT STARTED | — |
+| Blog admin | DONE | `/admin/posts`, `/admin/tags` |
 
 **Tests:** `tests/Feature/AdminTest.php` (dashboard, project create, role gates).
 
@@ -113,31 +113,32 @@
 
 | Page | Route | Status | Evidence |
 |------|-------|--------|----------|
-| Home | `/` | PARTIAL | `Welcome.vue` — hero, tech strip, featured projects; no latest blog/testimonials |
-| About | `/about` | PARTIAL | Profile-driven; resume link if `resume_path` set |
-| Experience | `/experience` | DONE | `PortfolioController@experience` |
-| Skills | `/skills` | DONE | Categories + skills |
-| Services | `/services` | DONE | |
-| Projects list | `/projects` | DONE | Filters + search client-side |
+| Home | `/` | DONE | `Welcome.vue` — hero, featured projects, latest posts, testimonials, contact |
+| About | `/about` | DONE | Story, goals, working style, photo, resume |
+| Experience | `/experience` | DONE | Dedicated timeline page |
+| Skills | `/skills` | DONE | Categories + skill bars |
+| Services | `/services` | DONE | Dedicated services grid |
+| Projects list | `/projects` | DONE | Filters + search + sort |
 | Project detail | `/projects/{slug}` | DONE | Case study fields, related, draft 404 test |
-| Blog (public) | — | NOT STARTED | See Phase 4 |
-| Contact | `/contact` | PARTIAL | Form; FAQ accordion per HLD unverified |
+| Blog (public) | `/blog` | DONE | List, tag filter, detail, RSS — see Phase 4 |
+| Contact | `/contact` | DONE | Form, FAQ accordion, email/GitHub/LinkedIn, resume |
 
-**Tests:** `tests/Feature/PublicPortfolioTest.php` (pages, contact, honeypot, project show).
+**Tests:** `tests/Feature/PublicPortfolioTest.php` (pages, contact, honeypot, project show, FAQ).
 
-**Remaining:** Home blog strip + testimonials; project sort; secure resume download route.
+**Remaining:** Deeper SEO / SSR is Phase 7. Contact email notifications remain Phase 5.
 
 ---
 
 ## Phase 4 — Blog
 
-| Task | Status |
-|------|--------|
-| DB models + migrations | NOT STARTED |
-| Public list/detail/tag routes | NOT STARTED | Stubs in `web.php` render static Vue |
-| Admin Markdown editor + draft/publish | NOT STARTED |
-| Code highlighting, RSS `/feed.xml` | NOT STARTED |
-| Replace hardcoded `articles` in `Blog.vue` | NOT STARTED |
+| Task | Status | Evidence |
+|------|--------|----------|
+| DB models + migrations | DONE | `posts`, `tags`, `post_tag`; `Post`, `Tag` models/factories |
+| Public list/detail/tag routes | DONE | `BlogController` + `Blog.vue` / `BlogPost.vue` |
+| Admin Markdown editor + draft/publish | DONE | `Admin/Posts/*`, `Admin/Tags/Index`, preview endpoint |
+| Code highlighting, RSS `/feed.xml` | DONE | highlight.js on article page; `FeedController` |
+| Home latest posts strip + Blog nav | DONE | `Welcome.vue` + `PublicLayout` |
+| Feature tests | DONE | `tests/Feature/BlogTest.php` |
 
 ---
 

@@ -21,14 +21,14 @@ const isDark = ref(false);
 const mobileMenuOpen = ref(false);
 
 const navLinks = [
-    { name: 'Home', href: '/#home' },
-    { name: 'About', href: '/#about' },
-    { name: 'Experience', href: '/#experience' },
-    { name: 'Skills', href: '/#skills' },
-    { name: 'Services', href: '/#services' },
+    { name: 'Home', href: '/' },
+    { name: 'About', href: '/about' },
+    { name: 'Experience', href: '/experience' },
+    { name: 'Skills', href: '/skills' },
+    { name: 'Services', href: '/services' },
     { name: 'Projects', href: '/projects' },
     { name: 'Blog', href: '/blog' },
-    { name: 'Contact', href: '/#contact' },
+    { name: 'Contact', href: '/contact' },
 ];
 
 onMounted(() => {
@@ -100,12 +100,14 @@ const scrollToTop = () => {
                         <Moon v-else class="w-5 h-5 text-slate-600" />
                     </button>
 
-                    <Link
+                    <a
                         href="/login"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         class="hidden sm:inline-flex items-center justify-center text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
                         Admin
-                    </Link>
+                    </a>
 
                     <!-- Mobile Menu Button -->
                     <button
@@ -132,13 +134,15 @@ const scrollToTop = () => {
                     {{ link.name }}
                 </a>
                 <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
-                    <Link
+                    <a
                         href="/login"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         @click="mobileMenuOpen = false"
                         class="block px-3 py-2 rounded-md text-sm font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white"
                     >
                         Admin Portal
-                    </Link>
+                    </a>
                 </div>
             </div>
         </header>

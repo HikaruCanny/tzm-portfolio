@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { CircleUser, ExternalLink, FolderKanban, Briefcase, LayoutDashboard, LogOut, Mail, Menu as MenuIcon, Moon, Quote, ScrollText, Sparkles, Sun, Tags, Ticket, User, Users, Wrench, X as XIcon } from '@lucide/vue';
+import { CircleUser, ExternalLink, FolderKanban, Briefcase, Hash, LayoutDashboard, LogOut, Mail, Menu as MenuIcon, Moon, Newspaper, Quote, ScrollText, Sparkles, Sun, Tags, Ticket, User, Users, Wrench, X as XIcon } from '@lucide/vue';
 import FlashMessage from '@/components/FlashMessage.vue';
 
 const page = usePage();
@@ -17,6 +17,8 @@ const navItems = computed(() => {
         { name: 'Experience', href: '/admin/experiences', icon: Briefcase },
         { name: 'Skills', href: '/admin/skills', icon: Sparkles },
         { name: 'Technologies', href: '/admin/technologies', icon: Tags },
+        { name: 'Posts', href: '/admin/posts', icon: Newspaper },
+        { name: 'Tags', href: '/admin/tags', icon: Hash },
         { name: 'Services', href: '/admin/services', icon: Wrench },
         { name: 'Testimonials', href: '/admin/testimonials', icon: Quote },
         { name: 'Messages', href: '/admin/messages', icon: Mail },

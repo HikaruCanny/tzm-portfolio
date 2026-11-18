@@ -14,6 +14,8 @@ const form = useForm({
     title: props.profile.title || '',
     tagline: props.profile.tagline || '',
     bio: props.profile.bio || '',
+    goals: props.profile.goals || '',
+    working_style: props.profile.working_style || '',
     email: props.profile.email || '',
     github_url: props.profile.github_url || '',
     linkedin_url: props.profile.linkedin_url || '',
@@ -67,6 +69,17 @@ const fileName = (path: string): string => path.split('/').pop() ?? path;
             <div>
                 <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Biography / About Story</label>
                 <textarea v-model="form.bio" rows="4" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Goals</label>
+                    <textarea v-model="form.goals" rows="4" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm" placeholder="What you are aiming for next"></textarea>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Working Style</label>
+                    <textarea v-model="form.working_style" rows="4" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm" placeholder="How you collaborate and ship"></textarea>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">

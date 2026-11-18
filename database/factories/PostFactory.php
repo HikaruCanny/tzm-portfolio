@@ -28,6 +28,7 @@ class PostFactory extends Factory
             'status' => 'published',
             'published_at' => now(),
             'reading_time' => 2,
+            'views_count' => 0,
         ];
     }
 

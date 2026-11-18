@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property string $status
  * @property Carbon|null $published_at
  * @property int $reading_time
+ * @property int $views_count
  */
 class Post extends Model
 {
@@ -34,6 +35,7 @@ class Post extends Model
         'status',
         'published_at',
         'reading_time',
+        'views_count',
     ];
 
     protected $casts = [

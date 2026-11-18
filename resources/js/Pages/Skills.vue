@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { computed, onMounted, ref } from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { Cpu, Layout, Database, Wrench, Sparkles } from '@lucide/vue';
+import Reveal from '@/components/Reveal.vue';
+import { ArrowRight, Cloud, Code2, Cpu, Database, Layout, Sparkles, Wrench } from '@lucide/vue';
 
 defineOptions({ layout: PublicLayout });
 
 interface Skill {
     id: number;
     name: string;
-    level?: number;
+    level?: number | null;
 }
 
 interface SkillCategory {
@@ -23,63 +25,300 @@ const props = withDefaults(defineProps<{
     categories: () => [],
 });
 
+const activeId = ref<number | null>(null);
+const animated = ref(false);
+
+const totalSkills = computed(() =>
+    props.categories.reduce((sum, category) => sum + category.skills.length, 0),
+);
+
+const activeCategory = computed(() => {
+    if (!props.categories.length) {
+        return null;
+    }
+
+    return props.categories.find((category) => category.id === activeId.value) ?? props.categories[0];
+});
+
 const getCategoryIcon = (name: string) => {
     const lower = name.toLowerCase();
-    if (lower.includes('backend')) return Cpu;
-    if (lower.includes('frontend')) return Layout;
-    if (lower.includes('database')) return Database;
-    if (lower.includes('devops') || lower.includes('tool')) return Wrench;
+
+    if (lower.includes('backend') || lower.includes('api')) {
+        return Cpu;
+    }
+
+    if (lower.includes('frontend') || lower.includes('ui')) {
+        return Layout;
+    }
+
+    if (lower.includes('database') || lower.includes('data')) {
+        return Database;
+    }
+
+    if (lower.includes('devops') || lower.includes('cloud') || lower.includes('infra')) {
+        return Cloud;
+    }
+
+    if (lower.includes('tool')) {
+        return Wrench;
+    }
+
+    if (lower.includes('language') || lower.includes('code')) {
+        return Code2;
+    }
+
     return Sparkles;
 };
+
+const accentFor = (index: number) => {
+    const accents = [
+        {
+            chip: 'from-indigo-500/15 via-sky-400/10 to-transparent',
+            bar: 'from-indigo-500 to-sky-400',
+            ring: 'ring-indigo-200/70 dark:ring-indigo-500/30',
+            icon: 'bg-indigo-600 text-white',
+            glow: 'bg-indigo-400/25',
+        },
+        {
+            chip: 'from-cyan-500/15 via-teal-400/10 to-transparent',
+            bar: 'from-cyan-500 to-teal-400',
+            ring: 'ring-cyan-200/70 dark:ring-cyan-500/30',
+            icon: 'bg-cyan-600 text-white',
+            glow: 'bg-cyan-400/25',
+        },
+        {
+            chip: 'from-violet-500/15 via-fuchsia-400/10 to-transparent',
+            bar: 'from-violet-500 to-fuchsia-400',
+            ring: 'ring-violet-200/70 dark:ring-violet-500/30',
+            icon: 'bg-violet-600 text-white',
+            glow: 'bg-violet-400/25',
+        },
+        {
+            chip: 'from-amber-500/15 via-orange-400/10 to-transparent',
+            bar: 'from-amber-500 to-orange-400',
+            ring: 'ring-amber-200/70 dark:ring-amber-500/30',
+            icon: 'bg-amber-500 text-white',
+            glow: 'bg-amber-400/25',
+        },
+    ];
+
+    return accents[index % accents.length];
+};
+
+onMounted(() => {
+    if (props.categories.length) {
+        activeId.value = props.categories[0].id;
+    }
+
+    requestAnimationFrame(() => {
+        animated.value = true;
+    });
+});
 </script>
 
 <template>
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12">
+    <div class="relative overflow-hidden">
         <Head title="Skills & Technologies – TZM" />
 
-        <div class="space-y-4">
-            <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                Technical Skills
-            </h1>
-            <p class="text-lg text-slate-600 dark:text-slate-400">
-                Categorized breakdown of backend, frontend, database, and infrastructure competencies.
-            </p>
+        <div class="pointer-events-none absolute inset-0 -z-10">
+            <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-indigo-300/30 blur-3xl dark:bg-indigo-600/20" />
+            <div class="absolute right-0 top-40 h-80 w-80 rounded-full bg-cyan-300/25 blur-3xl dark:bg-cyan-500/15" />
+            <div class="absolute bottom-10 left-1/3 h-64 w-64 rounded-full bg-violet-300/20 blur-3xl dark:bg-violet-500/15" />
+            <div
+                class="absolute inset-0 opacity-[0.035] dark:opacity-[0.06]"
+                style="background-image: linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px); background-size: 48px 48px;"
+            />
         </div>
 
-        <div v-if="props.categories.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div
-                v-for="cat in props.categories"
-                :key="cat.id"
-                class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6"
-            >
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                        <component :is="getCategoryIcon(cat.name)" class="w-5 h-5" />
+        <div class="mx-auto max-w-6xl space-y-14 px-4 py-16 sm:px-6 lg:px-8">
+            <Reveal>
+                <div class="grid items-end gap-8 lg:grid-cols-[1.4fr_0.8fr]">
+                    <div class="space-y-5">
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-indigo-600 dark:text-indigo-300">
+                            Skills
+                        </p>
+                        <h1 class="max-w-2xl text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl dark:text-white">
+                            Tools shaped by real product work
+                        </h1>
+                        <p class="max-w-xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+                            A clear map of the stack I use to design APIs, ship Vue interfaces, and keep systems reliable in production.
+                        </p>
                     </div>
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">
-                        {{ cat.name }}
-                    </h2>
-                </div>
 
-                <div class="space-y-4">
-                    <div v-for="skill in cat.skills" :key="skill.id" class="space-y-1.5">
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="font-medium text-slate-700 dark:text-slate-300">{{ skill.name }}</span>
-                            <span v-if="skill.level" class="text-xs text-slate-400">{{ skill.level }}%</span>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="rounded-3xl border border-white/60 bg-white/70 p-5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
+                            <p class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ props.categories.length }}</p>
+                            <p class="mt-1 text-sm text-slate-500">Categories</p>
                         </div>
-                        <div v-if="skill.level" class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                        <div class="rounded-3xl border border-white/60 bg-white/70 p-5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
+                            <p class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ totalSkills }}</p>
+                            <p class="mt-1 text-sm text-slate-500">Skills listed</p>
+                        </div>
+                    </div>
+                </div>
+            </Reveal>
+
+            <div v-if="props.categories.length" class="space-y-8">
+                <Reveal :delay="80">
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="(category, index) in props.categories"
+                            :key="category.id"
+                            type="button"
+                            class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all"
+                            :class="activeCategory?.id === category.id
+                                ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/15 dark:bg-white dark:text-slate-950'
+                                : 'bg-white/80 text-slate-600 ring-1 ring-slate-200 hover:text-slate-900 dark:bg-slate-900/70 dark:text-slate-300 dark:ring-slate-800 dark:hover:text-white'"
+                            @click="activeId = category.id"
+                        >
+                            <span
+                                class="flex h-6 w-6 items-center justify-center rounded-full text-[11px]"
+                                :class="activeCategory?.id === category.id ? 'bg-white/15' : accentFor(index).icon"
+                            >
+                                <component :is="getCategoryIcon(category.name)" class="h-3.5 w-3.5" />
+                            </span>
+                            {{ category.name }}
+                        </button>
+                    </div>
+                </Reveal>
+
+                <div class="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+                    <Reveal :delay="120">
+                        <article
+                            v-if="activeCategory"
+                            class="relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white p-7 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                        >
                             <div
-                                class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full transition-all duration-500"
-                                :style="{ width: `${skill.level}%` }"
-                            ></div>
-                        </div>
+                                class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl"
+                                :class="accentFor(props.categories.findIndex((item) => item.id === activeCategory.id)).glow"
+                            />
+                            <div class="relative space-y-6">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="space-y-3">
+                                        <div
+                                            class="inline-flex h-12 w-12 items-center justify-center rounded-2xl"
+                                            :class="accentFor(props.categories.findIndex((item) => item.id === activeCategory.id)).icon"
+                                        >
+                                            <component :is="getCategoryIcon(activeCategory.name)" class="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">
+                                                {{ activeCategory.name }}
+                                            </h2>
+                                            <p class="mt-1 text-sm text-slate-500">
+                                                {{ activeCategory.skills.length }} skills in this group
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div
+                                        v-for="skill in activeCategory.skills"
+                                        :key="skill.id"
+                                        class="space-y-2"
+                                    >
+                                        <div class="flex items-center justify-between gap-3 text-sm">
+                                            <span class="font-semibold text-slate-800 dark:text-slate-100">{{ skill.name }}</span>
+                                            <span v-if="skill.level" class="text-xs font-medium text-slate-400">{{ skill.level }}%</span>
+                                        </div>
+                                        <div
+                                            v-if="skill.level"
+                                            class="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+                                        >
+                                            <div
+                                                class="h-full rounded-full bg-gradient-to-r transition-all duration-700 ease-out"
+                                                :class="accentFor(props.categories.findIndex((item) => item.id === activeCategory.id)).bar"
+                                                :style="{ width: animated ? `${skill.level}%` : '0%' }"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </Reveal>
+
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <Reveal
+                            v-for="(category, index) in props.categories"
+                            :key="category.id"
+                            :delay="140 + index * 70"
+                        >
+                            <button
+                                type="button"
+                                class="group relative h-full overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90"
+                                :class="activeCategory?.id === category.id ? `ring-2 ${accentFor(index).ring}` : ''"
+                                @click="activeId = category.id"
+                            >
+                                <div
+                                    class="pointer-events-none absolute inset-0 bg-gradient-to-br opacity-80"
+                                    :class="accentFor(index).chip"
+                                />
+                                <div class="relative space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <span
+                                            class="inline-flex h-10 w-10 items-center justify-center rounded-xl"
+                                            :class="accentFor(index).icon"
+                                        >
+                                            <component :is="getCategoryIcon(category.name)" class="h-4 w-4" />
+                                        </span>
+                                        <span class="text-xs font-semibold text-slate-400">{{ category.skills.length }}</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ category.name }}</h3>
+                                        <div class="mt-3 flex flex-wrap gap-1.5">
+                                            <span
+                                                v-for="skill in category.skills.slice(0, 4)"
+                                                :key="skill.id"
+                                                class="rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200/80 dark:bg-slate-950/50 dark:text-slate-300 dark:ring-slate-700"
+                                            >
+                                                {{ skill.name }}
+                                            </span>
+                                            <span
+                                                v-if="category.skills.length > 4"
+                                                class="rounded-full px-2.5 py-1 text-xs font-medium text-slate-400"
+                                            >
+                                                +{{ category.skills.length - 4 }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </button>
+                        </Reveal>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div v-else class="text-center py-12 text-slate-500 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-            <p>No skills recorded yet.</p>
+            <div
+                v-else
+                class="rounded-[2rem] border border-dashed border-slate-300 bg-white/70 px-6 py-16 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-900/50"
+            >
+                No skills recorded yet.
+            </div>
+
+            <Reveal :delay="180">
+                <div class="flex flex-col items-start justify-between gap-4 rounded-[2rem] border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-cyan-50 px-6 py-6 sm:flex-row sm:items-center dark:border-slate-800 dark:from-indigo-950/40 dark:via-slate-900 dark:to-cyan-950/30">
+                    <div>
+                        <p class="text-sm font-semibold text-slate-900 dark:text-white">Want to see these skills in shipped work?</p>
+                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Browse project case studies or send a short note.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <Link
+                            href="/projects"
+                            class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950"
+                        >
+                            <span>View projects</span>
+                            <ArrowRight class="h-4 w-4" />
+                        </Link>
+                        <Link
+                            href="/contact"
+                            class="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                        >
+                            Contact
+                        </Link>
+                    </div>
+                </div>
+            </Reveal>
         </div>
     </div>
 </template>

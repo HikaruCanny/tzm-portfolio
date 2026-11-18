@@ -37,6 +37,7 @@ class PostController extends Controller
                 'slug' => $post->slug,
                 'status' => $post->status,
                 'published_at' => $post->published_at,
+                'views_count' => $post->views_count,
                 'tags' => $post->tags,
             ]);
 

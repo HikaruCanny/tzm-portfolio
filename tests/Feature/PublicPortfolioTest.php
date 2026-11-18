@@ -30,15 +30,42 @@ test('home shows three featured projects', function () {
     $this->get('/')->assertInertia(fn ($page) => $page->has('featuredProjects', 3));
 });
 
-test('section pages open on the landing page', function (string $path, string $target) {
-    $this->get($path)->assertRedirect($target);
+test('dedicated public portfolio pages render', function (string $path, string $component) {
+    $this->get($path)
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component($component));
 })->with([
-    ['/about', '/#about'],
-    ['/experience', '/#experience'],
-    ['/skills', '/#skills'],
-    ['/services', '/#services'],
-    ['/contact', '/#contact'],
+    ['/about', 'About'],
+    ['/experience', 'Experience'],
+    ['/skills', 'Skills'],
+    ['/services', 'Services'],
+    ['/contact', 'Contact'],
 ]);
+
+test('about page includes profile story fields', function () {
+    $this->get('/about')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('About')
+            ->has('profile', fn ($profile) => $profile
+                ->has('name')
+                ->has('bio')
+                ->etc()
+            )
+        );
+});
+
+test('contact page includes faq accordion data', function () {
+    $this->get('/contact')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Contact')
+            ->has('profile')
+            ->has('faqs', 5)
+            ->has('faqs.0.question')
+            ->has('faqs.0.answer')
+        );
+});
 
 test('projects page can be rendered with filterable technology tags', function () {
     $response = $this->get('/projects');
