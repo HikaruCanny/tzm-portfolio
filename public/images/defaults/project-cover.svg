@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="750" viewBox="0 0 1200 750" fill="none" role="img" aria-label="Default project cover">
+    <defs>
+        <linearGradient id="project-bg" x1="0" y1="0" x2="1200" y2="750" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#152433"/>
+            <stop offset="1" stop-color="#18283A"/>
+        </linearGradient>
+    </defs>
+    <rect width="1200" height="750" fill="url(#project-bg)"/>
+    <circle cx="1040" cy="600" r="280" fill="#5c7a9a" fill-opacity="0.18"/>
+    <circle cx="120" cy="120" r="200" fill="#8aa3bd" fill-opacity="0.12"/>
+    <rect x="390" y="200" width="200" height="160" rx="20" fill="#8aa3bd" fill-opacity="0.22" stroke="#b8c9d9" stroke-opacity="0.4" stroke-width="2"/>
+    <rect x="610" y="200" width="200" height="160" rx="20" fill="#b8c9d9" fill-opacity="0.12" stroke="#8aa3bd" stroke-opacity="0.35" stroke-width="2"/>
+    <rect x="475" y="400" width="250" height="14" rx="7" fill="#eef2f6" fill-opacity="0.5"/>
+    <rect x="430" y="430" width="340" height="10" rx="5" fill="#8aa3bd" fill-opacity="0.4"/>
+    <rect x="450" y="458" width="300" height="10" rx="5" fill="#8aa3bd" fill-opacity="0.3"/>
+    <text x="600" y="610" text-anchor="middle" fill="#eef2f6" fill-opacity="0.75" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="600" letter-spacing="0.35em">PROJECT</text>
+</svg>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
-import { CircleUser, ExternalLink, FolderKanban, Briefcase, Hash, LayoutDashboard, LogOut, Mail, Menu as MenuIcon, Moon, Newspaper, Quote, ScrollText, Sparkles, Sun, Tags, Ticket, User, Users, Wrench, X as XIcon } from '@lucide/vue';
+import { Link, router, usePage, usePoll } from '@inertiajs/vue3';
+import { Bell, CircleUser, ExternalLink, FolderKanban, Briefcase, Hash, LayoutDashboard, LogOut, Mail, Menu as MenuIcon, Moon, Newspaper, Quote, ScrollText, Sparkles, Sun, Tags, Ticket, User, Users, Wrench, X as XIcon } from '@lucide/vue';
 import FlashMessage from '@/components/FlashMessage.vue';
 
 const page = usePage();
@@ -9,6 +9,27 @@ const sidebarOpen = ref(false);
 const isDark = ref(false);
 
 const isSuperAdmin = computed(() => page.props.auth?.user?.role === 'superadmin');
+
+const adminMeta = computed(() => page.props.admin as {
+    unread_notifications_count: number;
+    unread_messages_count: number;
+    recent_notifications: Array<{
+        id: string;
+        read_at: string | null;
+        data: { name?: string; excerpt?: string; url?: string; subject?: string };
+        created_at: string;
+    }>;
+} | null);
+
+const notificationsOpen = ref(false);
+
+const markNotificationRead = (id: string) => {
+    router.patch(`/admin/notifications/${id}/read`, {}, { preserveScroll: true });
+};
+
+const markAllNotificationsRead = () => {
+    router.patch('/admin/notifications/read-all', {}, { preserveScroll: true });
+};
 
 const navItems = computed(() => {
     const items = [
@@ -47,6 +68,12 @@ onMounted(() => {
     }
 });
 
+usePoll(
+    15000,
+    { only: ['admin'], preserveState: true, preserveScroll: true },
+    { autoStart: true },
+);
+
 const toggleTheme = () => {
     isDark.value = !isDark.value;
     if (isDark.value) {
@@ -67,7 +94,7 @@ const isActive = (href: string) => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 flex transition-colors">
+    <div class="min-h-screen bg-transparent text-slate-800 dark:text-slate-100 flex transition-colors">
         <!-- Desktop Sidebar -->
         <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shrink-0">
             <!-- Brand -->
@@ -94,7 +121,13 @@ const isActive = (href: string) => {
                     ]"
                 >
                     <component :is="item.icon" class="w-4 h-4 shrink-0" />
-                    <span>{{ item.name }}</span>
+                    <span class="flex-1">{{ item.name }}</span>
+                    <span
+                        v-if="item.name === 'Messages' && (adminMeta?.unread_messages_count ?? 0) > 0"
+                        class="min-w-[1.25rem] rounded-full bg-indigo-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white"
+                    >
+                        {{ adminMeta?.unread_messages_count }}
+                    </span>
                 </Link>
             </nav>
 
@@ -140,6 +173,63 @@ const isActive = (href: string) => {
                 </div>
 
                 <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <button
+                            type="button"
+                            class="relative p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            aria-label="Notifications"
+                            @click="notificationsOpen = !notificationsOpen"
+                        >
+                            <Bell class="w-4 h-4" />
+                            <span
+                                v-if="(adminMeta?.unread_notifications_count ?? 0) > 0"
+                                class="absolute -top-0.5 -right-0.5 min-w-[1rem] rounded-full bg-red-500 px-1 text-[10px] font-bold leading-4 text-white text-center"
+                            >
+                                {{ adminMeta?.unread_notifications_count }}
+                            </span>
+                        </button>
+
+                        <div
+                            v-show="notificationsOpen"
+                            class="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
+                        >
+                            <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                                <span class="text-sm font-semibold text-slate-800 dark:text-slate-100">Notifications</span>
+                                <button
+                                    v-if="(adminMeta?.unread_notifications_count ?? 0) > 0"
+                                    type="button"
+                                    class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                                    @click="markAllNotificationsRead"
+                                >
+                                    Mark all read
+                                </button>
+                            </div>
+                            <div class="max-h-80 overflow-y-auto">
+                                <template v-if="adminMeta?.recent_notifications?.length">
+                                    <Link
+                                        v-for="note in adminMeta.recent_notifications"
+                                        :key="note.id"
+                                        :href="note.data.url ?? '/admin/messages'"
+                                        class="block border-b border-slate-50 px-4 py-3 text-left hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/80"
+                                        :class="note.read_at ? 'opacity-70' : ''"
+                                        @click="!note.read_at && markNotificationRead(note.id)"
+                                    >
+                                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                                            {{ note.data.name ?? 'New contact message' }}
+                                        </p>
+                                        <p v-if="note.data.subject" class="text-xs text-slate-500 truncate">
+                                            {{ note.data.subject }}
+                                        </p>
+                                        <p class="text-xs text-slate-500 mt-1 line-clamp-2">
+                                            {{ note.data.excerpt }}
+                                        </p>
+                                    </Link>
+                                </template>
+                                <p v-else class="px-4 py-6 text-center text-xs text-slate-500">No notifications yet.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <button
                         @click="toggleTheme"
                         type="button"

@@ -9,9 +9,10 @@ use App\Models\Project;
 use App\Models\Service;
 use App\Models\SkillCategory;
 use App\Models\Testimonial;
+use App\Support\Seo;
+use App\Support\StructuredData;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -19,46 +20,71 @@ class PortfolioController extends Controller
 {
     public function home(): Response
     {
-        return Inertia::render('Welcome', $this->landingProps());
+        $profile = Profile::instance();
+
+        return $this->inertiaWithSeo('Welcome', $this->landingProps(), Seo::forHome($profile));
     }
 
     public function about(): Response
     {
-        return Inertia::render('About', [
-            'profile' => Profile::instance(),
-        ]);
+        $profile = Profile::instance();
+
+        return $this->inertiaWithSeo('About', [
+            'profile' => $profile->toPublicArray(),
+        ], Seo::forStatic(
+            title: "About – {$profile->name}",
+            description: (string) ($profile->bio ?: config('seo.default_description')),
+            path: '/about',
+            jsonLd: StructuredData::person($profile),
+        ));
     }
 
     public function experience(): Response
     {
-        return Inertia::render('Experience', [
+        return $this->inertiaWithSeo('Experience', [
             'experiences' => Experience::query()->orderBy('sort_order')->orderByDesc('start_date')->get(),
-        ]);
+        ], Seo::forStatic(
+            title: 'Experience & Education',
+            description: 'Professional work history, internships, and computer science education.',
+            path: '/experience',
+        ));
     }
 
     public function skills(): Response
     {
-        return Inertia::render('Skills', [
+        return $this->inertiaWithSeo('Skills', [
             'categories' => SkillCategory::query()->with('skills')->orderBy('sort_order')->get(),
-        ]);
+        ], Seo::forStatic(
+            title: 'Skills & Technologies',
+            description: 'Laravel, Vue, Inertia, API design, databases, testing, and delivery tooling.',
+            path: '/skills',
+        ));
     }
 
     public function services(): Response
     {
-        return Inertia::render('Services', [
+        return $this->inertiaWithSeo('Services', [
             'services' => Service::query()->orderBy('sort_order')->get(),
-        ]);
+        ], Seo::forStatic(
+            title: 'What I Can Build',
+            description: 'Laravel applications, Inertia + Vue UIs, and maintainable handoff documentation.',
+            path: '/services',
+        ));
     }
 
     public function resume(): StreamedResponse
     {
         $profile = Profile::instance();
 
-        if ($profile->resume_path === null || ! Storage::disk('public')->exists($profile->resume_path)) {
+        if (! $profile->hasResume()) {
             abort(404);
         }
 
-        return Storage::disk('public')->download($profile->resume_path, 'TZM-Resume.pdf');
+        return Storage::disk('public')->download(
+            $profile->resume_path,
+            $profile->resumeDownloadFileName(),
+            ['Content-Type' => 'application/pdf'],
+        );
     }
 
     /**
@@ -67,7 +93,7 @@ class PortfolioController extends Controller
     private function landingProps(): array
     {
         return [
-            'profile' => Profile::instance(),
+            'profile' => Profile::instance()->toPublicArray(),
             'experiences' => Experience::query()->orderBy('sort_order')->orderByDesc('start_date')->get(),
             'categories' => SkillCategory::query()->with('skills')->orderBy('sort_order')->get(),
             'services' => Service::query()->orderBy('sort_order')->get(),

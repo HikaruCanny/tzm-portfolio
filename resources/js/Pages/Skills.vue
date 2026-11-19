@@ -70,40 +70,16 @@ const getCategoryIcon = (name: string) => {
     return Sparkles;
 };
 
-const accentFor = (index: number) => {
-    const accents = [
-        {
-            chip: 'from-indigo-500/15 via-sky-400/10 to-transparent',
-            bar: 'from-indigo-500 to-sky-400',
-            ring: 'ring-indigo-200/70 dark:ring-indigo-500/30',
-            icon: 'bg-indigo-600 text-white',
-            glow: 'bg-indigo-400/25',
-        },
-        {
-            chip: 'from-cyan-500/15 via-teal-400/10 to-transparent',
-            bar: 'from-cyan-500 to-teal-400',
-            ring: 'ring-cyan-200/70 dark:ring-cyan-500/30',
-            icon: 'bg-cyan-600 text-white',
-            glow: 'bg-cyan-400/25',
-        },
-        {
-            chip: 'from-violet-500/15 via-fuchsia-400/10 to-transparent',
-            bar: 'from-violet-500 to-fuchsia-400',
-            ring: 'ring-violet-200/70 dark:ring-violet-500/30',
-            icon: 'bg-violet-600 text-white',
-            glow: 'bg-violet-400/25',
-        },
-        {
-            chip: 'from-amber-500/15 via-orange-400/10 to-transparent',
-            bar: 'from-amber-500 to-orange-400',
-            ring: 'ring-amber-200/70 dark:ring-amber-500/30',
-            icon: 'bg-amber-500 text-white',
-            glow: 'bg-amber-400/25',
-        },
-    ];
+const skillTone = (index: number): string => `skill-tone-${index % 6}`;
 
-    return accents[index % accents.length];
-};
+const skillSurface = (index: number): string => `skill-surface-${index % 6}`;
+
+const purpleIconTone = (index: number): string => `skill-tone-${index % 3}`;
+
+const barTone = 'from-primary-300 to-primary-600 dark:from-primary-400 dark:to-primary-200';
+
+const categoryIndex = (id: number): number =>
+    props.categories.findIndex((item) => item.id === id);
 
 onMounted(() => {
     if (props.categories.length) {
@@ -117,24 +93,14 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="relative overflow-hidden">
+    <div class="section-bg-a">
         <Head title="Skills & Technologies – TZM" />
-
-        <div class="pointer-events-none absolute inset-0 -z-10">
-            <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-indigo-300/30 blur-3xl dark:bg-indigo-600/20" />
-            <div class="absolute right-0 top-40 h-80 w-80 rounded-full bg-cyan-300/25 blur-3xl dark:bg-cyan-500/15" />
-            <div class="absolute bottom-10 left-1/3 h-64 w-64 rounded-full bg-violet-300/20 blur-3xl dark:bg-violet-500/15" />
-            <div
-                class="absolute inset-0 opacity-[0.035] dark:opacity-[0.06]"
-                style="background-image: linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px); background-size: 48px 48px;"
-            />
-        </div>
 
         <div class="mx-auto max-w-6xl space-y-14 px-4 py-16 sm:px-6 lg:px-8">
             <Reveal>
                 <div class="grid items-end gap-8 lg:grid-cols-[1.4fr_0.8fr]">
                     <div class="space-y-5">
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-indigo-600 dark:text-indigo-300">
+                        <p class="text-special text-xs font-semibold uppercase tracking-[0.24em]">
                             Skills
                         </p>
                         <h1 class="max-w-2xl text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl dark:text-white">
@@ -167,13 +133,13 @@ onMounted(() => {
                             type="button"
                             class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all"
                             :class="activeCategory?.id === category.id
-                                ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/15 dark:bg-white dark:text-slate-950'
-                                : 'bg-white/80 text-slate-600 ring-1 ring-slate-200 hover:text-slate-900 dark:bg-slate-900/70 dark:text-slate-300 dark:ring-slate-800 dark:hover:text-white'"
+                                ? 'bg-primary-600 text-white shadow-sm dark:bg-primary-300 dark:text-primary-950'
+                                : 'chip-light border border-transparent hover:border-primary-200 dark:hover:border-white/15'"
                             @click="activeId = category.id"
                         >
                             <span
                                 class="flex h-6 w-6 items-center justify-center rounded-full text-[11px]"
-                                :class="activeCategory?.id === category.id ? 'bg-white/15' : accentFor(index).icon"
+                                :class="activeCategory?.id === category.id ? 'bg-white/20 dark:bg-primary-950/20' : purpleIconTone(index)"
                             >
                                 <component :is="getCategoryIcon(category.name)" class="h-3.5 w-3.5" />
                             </span>
@@ -186,23 +152,19 @@ onMounted(() => {
                     <Reveal :delay="120">
                         <article
                             v-if="activeCategory"
-                            class="relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white p-7 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                            class="rounded-[2rem] border p-7 shadow-sm"
+                            :class="skillSurface(categoryIndex(activeCategory.id))"
                         >
-                            <div
-                                class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl"
-                                :class="accentFor(props.categories.findIndex((item) => item.id === activeCategory.id)).glow"
-                            />
-                            <div class="relative space-y-6">
+                            <div class="space-y-6">
                                 <div class="flex items-start justify-between gap-4">
                                     <div class="space-y-3">
                                         <div
-                                            class="inline-flex h-12 w-12 items-center justify-center rounded-2xl"
-                                            :class="accentFor(props.categories.findIndex((item) => item.id === activeCategory.id)).icon"
+                                            :class="['inline-flex h-12 w-12 items-center justify-center rounded-2xl', purpleIconTone(categoryIndex(activeCategory.id))]"
                                         >
                                             <component :is="getCategoryIcon(activeCategory.name)" class="h-5 w-5" />
                                         </div>
                                         <div>
-                                            <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">
+                                            <h2 class="text-2xl font-extrabold text-cyan-700 dark:text-cyan-300">
                                                 {{ activeCategory.name }}
                                             </h2>
                                             <p class="mt-1 text-sm text-slate-500">
@@ -214,12 +176,12 @@ onMounted(() => {
 
                                 <div class="space-y-4">
                                     <div
-                                        v-for="skill in activeCategory.skills"
+                                        v-for="(skill, skillIndex) in activeCategory.skills"
                                         :key="skill.id"
                                         class="space-y-2"
                                     >
                                         <div class="flex items-center justify-between gap-3 text-sm">
-                                            <span class="font-semibold text-slate-800 dark:text-slate-100">{{ skill.name }}</span>
+                                            <span :class="['rounded-full px-2.5 py-0.5 text-xs font-semibold', skillTone(skillIndex)]">{{ skill.name }}</span>
                                             <span v-if="skill.level" class="text-xs font-medium text-slate-400">{{ skill.level }}%</span>
                                         </div>
                                         <div
@@ -228,7 +190,7 @@ onMounted(() => {
                                         >
                                             <div
                                                 class="h-full rounded-full bg-gradient-to-r transition-all duration-700 ease-out"
-                                                :class="accentFor(props.categories.findIndex((item) => item.id === activeCategory.id)).bar"
+                                                :class="barTone"
                                                 :style="{ width: animated ? `${skill.level}%` : '0%' }"
                                             />
                                         </div>
@@ -246,31 +208,29 @@ onMounted(() => {
                         >
                             <button
                                 type="button"
-                                class="group relative h-full overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90"
-                                :class="activeCategory?.id === category.id ? `ring-2 ${accentFor(index).ring}` : ''"
+                                class="group h-full rounded-[1.75rem] border p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                                :class="[
+                                    skillSurface(index),
+                                    activeCategory?.id === category.id ? 'ring-2 ring-primary-300/70 dark:ring-primary-400/35' : '',
+                                ]"
                                 @click="activeId = category.id"
                             >
-                                <div
-                                    class="pointer-events-none absolute inset-0 bg-gradient-to-br opacity-80"
-                                    :class="accentFor(index).chip"
-                                />
-                                <div class="relative space-y-4">
+                                <div class="space-y-4">
                                     <div class="flex items-center justify-between">
                                         <span
-                                            class="inline-flex h-10 w-10 items-center justify-center rounded-xl"
-                                            :class="accentFor(index).icon"
+                                            :class="['inline-flex h-10 w-10 items-center justify-center rounded-xl', purpleIconTone(index)]"
                                         >
                                             <component :is="getCategoryIcon(category.name)" class="h-4 w-4" />
                                         </span>
                                         <span class="text-xs font-semibold text-slate-400">{{ category.skills.length }}</span>
                                     </div>
                                     <div>
-                                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ category.name }}</h3>
+                                        <h3 class="text-lg font-bold text-cyan-700 dark:text-cyan-300">{{ category.name }}</h3>
                                         <div class="mt-3 flex flex-wrap gap-1.5">
                                             <span
-                                                v-for="skill in category.skills.slice(0, 4)"
+                                                v-for="(skill, skillIndex) in category.skills.slice(0, 4)"
                                                 :key="skill.id"
-                                                class="rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200/80 dark:bg-slate-950/50 dark:text-slate-300 dark:ring-slate-700"
+                                                :class="['rounded-full px-2.5 py-1 text-xs font-medium', skillTone(index * 3 + skillIndex)]"
                                             >
                                                 {{ skill.name }}
                                             </span>
@@ -297,7 +257,7 @@ onMounted(() => {
             </div>
 
             <Reveal :delay="180">
-                <div class="flex flex-col items-start justify-between gap-4 rounded-[2rem] border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-cyan-50 px-6 py-6 sm:flex-row sm:items-center dark:border-slate-800 dark:from-indigo-950/40 dark:via-slate-900 dark:to-cyan-950/30">
+                <div class="flex flex-col items-start justify-between gap-4 rounded-[2rem] border border-primary-100 bg-gradient-to-r from-primary-50 via-white to-primary-50/40 px-6 py-6 sm:flex-row sm:items-center dark:border-slate-800 dark:from-primary-950/40 dark:via-slate-900 dark:to-primary-950/20">
                     <div>
                         <p class="text-sm font-semibold text-slate-900 dark:text-white">Want to see these skills in shipped work?</p>
                         <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Browse project case studies or send a short note.</p>

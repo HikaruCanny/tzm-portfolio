@@ -15,6 +15,8 @@ defineProps<{
             status: string;
             published_at?: string | null;
             views_count: number;
+            is_featured: boolean;
+            author_name?: string | null;
             tags: Array<{ id: number; name: string; slug: string }>;
         }>;
         current_page: number;
@@ -62,6 +64,7 @@ const deletePost = (id: number) => {
                 <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500 dark:bg-slate-950/50 dark:text-slate-400">
                     <tr>
                         <th class="px-6 py-4">Title</th>
+                        <th class="px-6 py-4">Author</th>
                         <th class="px-6 py-4">Tags</th>
                         <th class="px-6 py-4">Status</th>
                         <th class="px-6 py-4">Views</th>
@@ -75,7 +78,16 @@ const deletePost = (id: number) => {
                         class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
                     >
                         <td class="px-6 py-4 font-semibold text-slate-900 dark:text-white">
-                            {{ post.title }}
+                            <span>{{ post.title }}</span>
+                            <span
+                                v-if="post.is_featured"
+                                class="ml-2 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                            >
+                                Featured
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-600 dark:text-slate-300">
+                            {{ post.author_name || '—' }}
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex flex-wrap gap-1">
@@ -122,7 +134,7 @@ const deletePost = (id: number) => {
                         </td>
                     </tr>
                     <tr v-if="posts.data.length === 0">
-                        <td colspan="5" class="px-6 py-10 text-center text-sm text-slate-500">
+                        <td colspan="6" class="px-6 py-10 text-center text-sm text-slate-500">
                             No posts yet.
                         </td>
                     </tr>

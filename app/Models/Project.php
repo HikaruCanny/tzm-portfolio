@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPortfolioCover;
+use App\Support\PortfolioCover;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $role
  * @property string $status
  * @property string|null $cover_image
+ * @property-read string $cover_url
  * @property string|null $demo_url
  * @property string|null $repo_url
  * @property bool $is_featured
@@ -28,6 +31,8 @@ class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
     use HasFactory;
+
+    use HasPortfolioCover;
 
     protected $fillable = [
         'title', 'slug', 'summary', 'problem', 'solution',
@@ -58,5 +63,10 @@ class Project extends Model
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true);
+    }
+
+    protected function portfolioCoverDefault(): string
+    {
+        return PortfolioCover::PROJECT;
     }
 }

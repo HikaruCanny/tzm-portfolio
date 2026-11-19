@@ -8,7 +8,7 @@ import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import { nextTick, onMounted, ref } from 'vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { ArrowLeft, Calendar, Clock, Check, Eye, Share2 } from '@lucide/vue';
+import { ArrowLeft, ArrowRight, Calendar, Clock, Check, Eye, FileText, Share2 } from '@lucide/vue';
 import 'highlight.js/styles/github-dark.min.css';
 
 hljs.registerLanguage('php', php);
@@ -43,18 +43,33 @@ interface RelatedPost {
     excerpt: string;
 }
 
+interface Author {
+    name: string;
+    title?: string | null;
+    photo_path?: string | null;
+}
+
+const skillTone = (index: number): string => `skill-tone-${index % 6}`;
+const purpleIconTone = (index: number): string => `skill-tone-${index % 3}`;
+const titleCyan = 'text-cyan-700 transition-colors hover:text-cyan-800 dark:text-cyan-300 dark:hover:text-cyan-200';
+const actionLightPurple = 'skill-tone-0';
+
 const props = defineProps<{
     post: {
         title: string;
         slug: string;
         excerpt: string;
+        meta_description: string;
         cover_image?: string | null;
+        cover_url: string;
+        og_image?: string | null;
         published_at?: string | null;
         reading_time: number;
         views_count: number;
         html: string;
         toc: TocItem[];
         tags: Tag[];
+        author: Author;
     };
     relatedPosts: RelatedPost[];
 }>();
@@ -134,13 +149,19 @@ onMounted(async () => {
 </script>
 
 <template>
+    <div class="section-bg-a">
     <div class="mx-auto max-w-4xl space-y-8 px-4 py-16 sm:px-6 lg:px-8">
-        <Head :title="`${post.title} – TZM`" />
+        <Head :title="`${post.title} – TZM`">
+            <meta head-key="description" name="description" :content="post.meta_description" />
+            <meta head-key="og:title" property="og:title" :content="post.title" />
+            <meta head-key="og:description" property="og:description" :content="post.meta_description" />
+            <meta head-key="og:image" property="og:image" :content="post.og_image" />
+        </Head>
 
         <div>
             <Link
                 href="/blog"
-                class="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+                class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:underline dark:text-primary-400"
             >
                 <ArrowLeft class="h-4 w-4" />
                 <span>Back to all posts</span>
@@ -150,18 +171,22 @@ onMounted(async () => {
         <header class="space-y-4">
             <div class="flex flex-wrap gap-2">
                 <Link
-                    v-for="tag in post.tags"
+                    v-for="(tag, tagIndex) in post.tags"
                     :key="tag.id"
                     :href="`/blog/tag/${tag.slug}`"
-                    class="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                    :class="['rounded-full px-2.5 py-0.5 text-xs font-semibold', skillTone(tagIndex)]"
                 >
                     {{ tag.name }}
                 </Link>
             </div>
-            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+            <h1 class="text-3xl font-extrabold tracking-tight text-cyan-700 sm:text-4xl dark:text-cyan-300">
                 {{ post.title }}
             </h1>
             <p class="text-base text-slate-600 dark:text-slate-400">{{ post.excerpt }}</p>
+            <p class="text-sm text-slate-600 dark:text-slate-400">
+                <span class="text-special font-semibold">Author</span> :
+                <span class="font-semibold text-slate-900 dark:text-white">{{ post.author.name }}</span>
+            </p>
             <div class="flex flex-wrap items-center gap-4 text-xs text-slate-500">
                 <span v-if="post.published_at" class="flex items-center gap-1">
                     <Calendar class="h-3.5 w-3.5" />
@@ -177,7 +202,7 @@ onMounted(async () => {
                 </span>
                 <button
                     type="button"
-                    class="inline-flex items-center gap-1 text-indigo-600 hover:underline dark:text-indigo-400"
+                    class="inline-flex items-center gap-1 text-primary-600 hover:underline dark:text-primary-400"
                     @click="copyLink"
                 >
                     <component :is="copied ? Check : Share2" class="h-3.5 w-3.5" />
@@ -187,17 +212,16 @@ onMounted(async () => {
         </header>
 
         <img
-            v-if="post.cover_image"
-            :src="`/storage/${post.cover_image}`"
+            :src="post.cover_url"
             :alt="post.title"
             class="aspect-[16/9] w-full rounded-2xl border border-slate-200 object-cover dark:border-slate-800"
         />
 
-        <div v-if="post.toc.length" class="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">On this page</p>
+        <div v-if="post.toc.length" class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">On this page</p>
             <ul class="mt-3 space-y-2 text-sm">
                 <li v-for="item in post.toc" :key="item.id" :class="item.level === 3 ? 'pl-4' : ''">
-                    <a :href="`#${item.id}`" class="text-indigo-700 hover:underline dark:text-indigo-300">
+                    <a :href="`#${item.id}`" class="text-slate-700 hover:text-primary-600 hover:underline dark:text-slate-300 dark:hover:text-primary-300">
                         {{ item.text }}
                     </a>
                 </li>
@@ -214,15 +238,23 @@ onMounted(async () => {
             <h2 class="text-xl font-bold text-slate-900 dark:text-white">Related posts</h2>
             <div class="grid gap-4 sm:grid-cols-3">
                 <Link
-                    v-for="related in relatedPosts"
+                    v-for="(related, index) in relatedPosts"
                     :key="related.id"
                     :href="`/blog/${related.slug}`"
-                    class="rounded-xl border border-slate-200 bg-white p-4 hover:border-indigo-400 dark:border-slate-800 dark:bg-slate-900"
+                    class="space-y-3 rounded-xl border border-primary-100 bg-primary-50 p-4 hover:border-primary-400 dark:border-white/10 dark:bg-white/5"
                 >
-                    <h3 class="font-semibold text-slate-900 dark:text-white">{{ related.title }}</h3>
-                    <p class="mt-2 line-clamp-3 text-sm text-slate-600 dark:text-slate-400">{{ related.excerpt }}</p>
+                    <div :class="['flex h-10 w-10 items-center justify-center rounded-xl', purpleIconTone(index)]">
+                        <FileText class="h-5 w-5" />
+                    </div>
+                    <h3 :class="['font-semibold', titleCyan]">{{ related.title }}</h3>
+                    <p class="line-clamp-3 text-sm text-slate-600 dark:text-slate-400">{{ related.excerpt }}</p>
+                    <span :class="['inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold', actionLightPurple]">
+                        Read
+                        <ArrowRight class="h-3.5 w-3.5" />
+                    </span>
                 </Link>
             </div>
         </section>
+    </div>
     </div>
 </template>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -38,5 +39,25 @@ class ContactMessage extends Model
     public function scopeUnread($query)
     {
         return $query->whereNull('read_at')->where('is_spam', false);
+    }
+
+    public function scopeNotSpam($query)
+    {
+        return $query->where('is_spam', false);
+    }
+
+    public function scopeSpam($query)
+    {
+        return $query->where('is_spam', true);
+    }
+
+    public function scopeHandled($query)
+    {
+        return $query->whereNotNull('handled_at')->notSpam();
+    }
+
+    public function replies(): HasMany
+    {
+        return $this->hasMany(ContactReply::class);
     }
 }

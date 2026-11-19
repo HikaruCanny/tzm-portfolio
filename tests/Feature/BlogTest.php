@@ -3,6 +3,7 @@
 use App\Models\Post;
 use App\Models\Tag;
 use App\Models\User;
+use App\Support\PortfolioCover;
 
 test('blog index lists only published posts', function () {
     $published = Post::factory()->create([
@@ -22,6 +23,7 @@ test('blog index lists only published posts', function () {
             ->component('Blog')
             ->has('posts.data', 1)
             ->where('posts.data.0.slug', $published->slug)
+            ->where('featuredPost', null)
             ->has('tags')
         );
 });
@@ -47,6 +49,7 @@ test('blog post page renders published markdown and hides drafts', function () {
             ->where('post.title', 'Inertia Notes')
             ->has('post.html')
             ->has('post.toc', 1)
+            ->has('post.author.name')
             ->has('relatedPosts')
         );
 
@@ -181,6 +184,46 @@ test('opening a published post increments views once per session', function () {
     expect($post->fresh()->views_count)->toBe(1);
 });
 
+test('post without cover uses default blog cover url', function () {
+    $post = Post::factory()->make(['cover_image' => null]);
+
+    expect($post->cover_url)->toBe(PortfolioCover::assetUrl(null, PortfolioCover::BLOG));
+});
+
+test('blog index exposes default cover url when no upload', function () {
+    Post::factory()->create([
+        'slug' => 'no-cover-post',
+        'cover_image' => null,
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+
+    $this->get('/blog')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Blog')
+            ->where('posts.data.0.slug', 'no-cover-post')
+            ->where('posts.data.0.cover_url', PortfolioCover::assetUrl(null, PortfolioCover::BLOG))
+        );
+});
+
+test('blog post page uses default cover for og image when missing upload', function () {
+    $post = Post::factory()->create([
+        'slug' => 'no-cover-og',
+        'cover_image' => null,
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+
+    $this->get("/blog/{$post->slug}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('BlogPost')
+            ->where('post.cover_url', PortfolioCover::assetUrl(null, PortfolioCover::BLOG))
+            ->where('post.og_image', PortfolioCover::absoluteUrl(null, PortfolioCover::BLOG))
+        );
+});
+
 test('blog index includes cover image and views count', function () {
     Post::factory()->create([
         'slug' => 'with-cover',
@@ -209,4 +252,136 @@ test('draft posts do not receive view counts', function () {
     $this->get('/blog/never-viewed-draft')->assertNotFound();
 
     expect($draft->fresh()->views_count)->toBe(0);
+});
+
+test('featured post is shown as the blog hero and omitted from the list', function () {
+    $featured = Post::factory()->featured()->create([
+        'slug' => 'hero-article',
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+    $regular = Post::factory()->create([
+        'slug' => 'regular-article',
+        'status' => 'published',
+        'published_at' => now()->subDay(),
+    ]);
+
+    $this->get('/blog')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Blog')
+            ->where('featuredPost.slug', $featured->slug)
+            ->has('posts.data', 1)
+            ->where('posts.data.0.slug', $regular->slug)
+        );
+});
+
+test('blog list can be sorted by most viewed', function () {
+    Post::factory()->create([
+        'slug' => 'quiet-post',
+        'status' => 'published',
+        'published_at' => now(),
+        'views_count' => 1,
+    ]);
+    Post::factory()->create([
+        'slug' => 'popular-post',
+        'status' => 'published',
+        'published_at' => now()->subDay(),
+        'views_count' => 40,
+    ]);
+
+    $this->get('/blog?sort=popular')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.sort', 'popular')
+            ->where('posts.data.0.slug', 'popular-post')
+            ->where('posts.data.1.slug', 'quiet-post')
+        );
+});
+
+test('public blog paginates published posts six per page', function () {
+    Post::factory()->count(7)->create([
+        'status' => 'published',
+        'published_at' => now(),
+        'is_featured' => false,
+    ]);
+
+    $this->get('/blog')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('posts.current_page', 1)
+            ->where('posts.last_page', 2)
+            ->has('posts.data', 6)
+            ->has('posts.links', 4)
+        );
+
+    $this->get('/blog?page=2')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('posts.current_page', 2)
+            ->has('posts.data', 1)
+        );
+});
+
+test('admin posts index paginates ten per page', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    Post::factory()->count(11)->create();
+
+    $this->actingAs($admin)
+        ->get('/admin/posts')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Admin/Posts/Index')
+            ->where('posts.current_page', 1)
+            ->where('posts.last_page', 2)
+            ->has('posts.data', 10)
+        );
+
+    $this->actingAs($admin)
+        ->get('/admin/posts?page=2')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('posts.current_page', 2)
+            ->has('posts.data', 1)
+        );
+});
+
+test('article page includes author byline and seo description', function () {
+    $author = User::factory()->create(['name' => 'TZM Writer', 'role' => 'admin']);
+    Post::factory()->create([
+        'user_id' => $author->id,
+        'slug' => 'authored-post',
+        'excerpt' => 'Card excerpt',
+        'meta_description' => 'Custom search description',
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+
+    $this->get('/blog/authored-post')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('post.author.name', 'TZM Writer')
+            ->where('post.meta_description', 'Custom search description')
+        )
+        ->assertSee('name="description" content="Custom search description"', false)
+        ->assertSee('property="og:description" content="Custom search description"', false);
+});
+
+test('featuring a post unfeatures the previous hero', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $first = Post::factory()->featured()->create(['slug' => 'old-hero']);
+
+    $this->actingAs($admin)
+        ->post('/admin/posts', [
+            'title' => 'New Hero',
+            'excerpt' => 'New featured excerpt',
+            'body' => '## Body',
+            'status' => 'published',
+            'is_featured' => true,
+        ])
+        ->assertRedirect(route('admin.posts.index'));
+
+    expect($first->fresh()->is_featured)->toBeFalse();
+    expect(Post::query()->where('slug', 'new-hero')->value('is_featured'))->toBeTrue();
+    expect(Post::query()->where('slug', 'new-hero')->value('user_id'))->toBe($admin->id);
 });

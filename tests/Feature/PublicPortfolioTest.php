@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Project;
+use App\Support\PortfolioCover;
 
 test('home page can be rendered with dynamic portfolio props', function () {
     $response = $this->get('/');
@@ -75,6 +76,29 @@ test('projects page can be rendered with filterable technology tags', function (
         ->has('projects')
         ->has('technologies')
     );
+});
+
+test('project without cover uses default project cover url', function () {
+    $project = Project::factory()->make(['cover_image' => null]);
+
+    expect($project->cover_url)->toBe(PortfolioCover::assetUrl(null, PortfolioCover::PROJECT));
+});
+
+test('projects list exposes default cover url when no upload', function () {
+    Project::factory()->create([
+        'slug' => 'no-cover-project',
+        'cover_image' => null,
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
+
+    $this->get('/projects')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Projects')
+            ->where('projects.0.slug', 'no-cover-project')
+            ->where('projects.0.cover_url', PortfolioCover::assetUrl(null, PortfolioCover::PROJECT))
+        );
 });
 
 test('project case study page can be rendered for published project', function () {

@@ -26,10 +26,18 @@ class PostFactory extends Factory
             'excerpt' => fake()->paragraph(),
             'body_markdown' => "## A heading\n\n".fake()->paragraphs(2, true),
             'status' => 'published',
+            'is_featured' => false,
             'published_at' => now(),
             'reading_time' => 2,
             'views_count' => 0,
         ];
+    }
+
+    public function featured(): static
+    {
+        return $this->state(fn (): array => [
+            'is_featured' => true,
+        ]);
     }
 
     public function draft(): static

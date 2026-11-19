@@ -2,21 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewContactMessage;
 use App\Models\ContactMessage;
 use App\Models\Profile;
+use App\Support\Seo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Inertia\Response;
 
 class ContactController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Contact', [
-            'profile' => Profile::instance(),
+        $profile = Profile::instance();
+
+        return $this->inertiaWithSeo('Contact', [
+            'profile' => $profile->toPublicArray(),
             'faqs' => $this->faqs(),
-        ]);
+        ], Seo::forStatic(
+            title: 'Contact',
+            description: 'Get in touch about roles, contract work, or architecture questions. Resume and FAQs included.',
+            path: '/contact',
+        ));
     }
 
     public function store(Request $request): RedirectResponse
@@ -31,7 +38,7 @@ class ContactController extends Controller
 
         $isSpam = ! empty($request->input('_hp'));
 
-        ContactMessage::create([
+        $message = ContactMessage::create([
             'name' => $request->input('name'),
             'email' => $request->input('email'),
             'subject' => $request->input('subject'),
@@ -39,6 +46,10 @@ class ContactController extends Controller
             'ip_hash' => hash('sha256', $request->ip() ?? '127.0.0.1'),
             'is_spam' => $isSpam,
         ]);
+
+        if (! $isSpam) {
+            NewContactMessage::dispatch($message);
+        }
 
         return back()->with('success', 'Your message has been received! I will respond shortly.');
     }

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Technology;
-use Inertia\Inertia;
+use App\Support\Seo;
 use Inertia\Response;
 
 class ProjectController extends Controller
@@ -21,10 +21,14 @@ class ProjectController extends Controller
             ->orderBy('name')
             ->pluck('name');
 
-        return Inertia::render('Projects', [
+        return $this->inertiaWithSeo('Projects', [
             'projects' => $projects,
             'technologies' => $technologies,
-        ]);
+        ], Seo::forStatic(
+            title: 'Projects Portfolio',
+            description: 'Case studies across Laravel APIs, Inertia admin tools, and Vue product interfaces.',
+            path: '/projects',
+        ));
     }
 
     public function show(string $slug): Response
@@ -41,9 +45,9 @@ class ProjectController extends Controller
             ->take(3)
             ->get();
 
-        return Inertia::render('Projects/Show', [
+        return $this->inertiaWithSeo('Projects/Show', [
             'project' => $project,
             'relatedProjects' => $relatedProjects,
-        ]);
+        ], Seo::forProject($project));
     }
 }

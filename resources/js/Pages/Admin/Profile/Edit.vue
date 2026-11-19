@@ -17,11 +17,13 @@ const form = useForm({
     goals: props.profile.goals || '',
     working_style: props.profile.working_style || '',
     email: props.profile.email || '',
+    phone: props.profile.phone || '',
     github_url: props.profile.github_url || '',
     linkedin_url: props.profile.linkedin_url || '',
     location: props.profile.location || '',
     photo: null as File | null,
     resume: null as File | null,
+    remove_resume: false,
 });
 
 const submit = () => {
@@ -82,10 +84,19 @@ const fileName = (path: string): string => path.split('/').pop() ?? path;
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div class="border-t border-slate-200 dark:border-slate-800 pt-6 space-y-4">
+                <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200">Public contact &amp; social links</h2>
+                <p class="text-xs text-slate-500">Shown on Contact, Home, and SEO. Phone appears on the public Contact page.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
                     <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Public Contact Email</label>
                     <input v-model="form.email" type="email" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm" />
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Phone (optional)</label>
+                    <input v-model="form.phone" type="tel" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm" placeholder="+959 …" />
                 </div>
                 <div>
                     <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">GitHub Profile URL</label>
@@ -118,10 +129,28 @@ const fileName = (path: string): string => path.split('/').pop() ?? path;
                 </div>
                 <div>
                     <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Resume PDF</label>
-                    <p v-if="props.profile.resume_path" class="mt-2 text-xs text-slate-500 break-all">
-                        {{ fileName(props.profile.resume_path) }}
-                    </p>
+                    <p class="mt-1 text-xs text-slate-500">PDF only, max 5&nbsp;MB. Visitors download from <code class="text-indigo-600">/resume</code>.</p>
+                    <div v-if="props.profile.has_resume" class="mt-2 flex flex-wrap items-center gap-3">
+                        <p class="text-xs text-slate-500 break-all">
+                            {{ props.profile.resume_path ? fileName(props.profile.resume_path) : 'Current resume on file' }}
+                        </p>
+                        <a
+                            :href="props.profile.resume_url ?? '/resume'"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+                        >
+                            Preview download
+                        </a>
+                    </div>
                     <input type="file" accept="application/pdf" class="w-full mt-2 text-sm" @change="form.resume = ($event.target as HTMLInputElement).files?.[0] ?? null" />
+                    <label
+                        v-if="props.profile.has_resume"
+                        class="mt-2 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400"
+                    >
+                        <input v-model="form.remove_resume" type="checkbox" class="rounded border-slate-300" />
+                        Remove current resume
+                    </label>
                     <p v-if="form.errors.resume" class="mt-1 text-xs text-red-600">{{ form.errors.resume }}</p>
                 </div>
             </div>

@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\Profile;
 use App\Models\Tag;
+use App\Models\User;
 use App\Services\RendersBlogMarkdown;
+use App\Support\PortfolioCover;
+use App\Support\Seo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Inertia\Inertia;
 use Inertia\Response;
 
 class BlogController extends Controller
@@ -17,26 +20,12 @@ class BlogController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Blog', [
-            'posts' => $this->posts($request),
-            'tags' => Tag::query()->orderBy('name')->get(['id', 'name', 'slug']),
-            'filters' => [
-                'search' => $request->string('search')->trim()->toString(),
-                'tag' => null,
-            ],
-        ]);
+        return $this->listing($request);
     }
 
     public function tag(Request $request, Tag $tag): Response
     {
-        return Inertia::render('Blog', [
-            'posts' => $this->posts($request, $tag),
-            'tags' => Tag::query()->orderBy('name')->get(['id', 'name', 'slug']),
-            'filters' => [
-                'search' => $request->string('search')->trim()->toString(),
-                'tag' => $tag->only(['name', 'slug']),
-            ],
-        ]);
+        return $this->listing($request, $tag);
     }
 
     public function show(Request $request, Post $post): Response
@@ -45,7 +34,7 @@ class BlogController extends Controller
 
         $this->recordView($request, $post);
 
-        $post->load('tags:id,name,slug');
+        $post->load(['tags:id,name,slug', 'author:id,name']);
         $rendered = $this->markdown->render($post->body_markdown);
         $tagIds = $post->tags->pluck('id');
 
@@ -68,57 +57,151 @@ class BlogController extends Controller
                 ->get(['id', 'title', 'slug', 'excerpt']);
         }
 
-        return Inertia::render('BlogPost', [
+        $description = $post->meta_description ?: $post->excerpt;
+        $ogImage = PortfolioCover::absoluteUrl($post->cover_image, PortfolioCover::BLOG);
+
+        $seo = Seo::forPost($post, $description, $ogImage);
+
+        return $this->inertiaWithSeo('BlogPost', [
             'post' => [
                 'title' => $post->title,
                 'slug' => $post->slug,
                 'excerpt' => $post->excerpt,
+                'meta_description' => $description,
                 'cover_image' => $post->cover_image,
+                'cover_url' => $post->cover_url,
+                'og_image' => $ogImage,
                 'published_at' => $post->published_at,
                 'reading_time' => $post->reading_time,
                 'views_count' => $post->views_count,
                 'html' => $rendered['html'],
                 'toc' => $rendered['toc'],
                 'tags' => $post->tags,
+                'author' => $this->authorPayload($post->author),
             ],
             'relatedPosts' => $related,
-        ]);
+        ], $seo);
     }
 
-    /**
-     * @return LengthAwarePaginator<int, array<string, mixed>>
-     */
-    private function posts(Request $request, ?Tag $tag = null): LengthAwarePaginator
+    private function listing(Request $request, ?Tag $tag = null): Response
     {
         $search = $request->string('search')->trim()->toString();
+        $sort = $request->string('sort')->toString();
+        $sort = in_array($sort, ['newest', 'popular'], true) ? $sort : 'newest';
 
-        return Post::published()
-            ->with('tags:id,name,slug')
+        $featured = Post::published()
+            ->with(['tags:id,name,slug', 'author:id,name'])
+            ->featured()
             ->when($tag, function (Builder $query) use ($tag): void {
                 $query->whereHas('tags', function (Builder $query) use ($tag): void {
                     $query->whereKey($tag->id);
                 });
             })
             ->when($search !== '', function (Builder $query) use ($search): void {
-                $like = '%'.addcslashes($search, '%_\\').'%';
-                $query->where(function (Builder $query) use ($like): void {
-                    $query->where('title', 'like', $like)->orWhere('excerpt', 'like', $like);
-                });
+                $this->applySearch($query, $search);
             })
             ->latest('published_at')
+            ->first();
+
+        $description = $tag
+            ? "Articles tagged {$tag->name} on Laravel, Vue, and web architecture."
+            : 'Technical writing on Laravel, Inertia, Vue, and API design.';
+
+        $title = $tag ? "{$tag->name} – Technical Blog" : 'Technical Blog';
+
+        $path = $tag ? "/blog/tag/{$tag->slug}" : '/blog';
+
+        return $this->inertiaWithSeo('Blog', [
+            'posts' => $this->posts($request, $tag, $featured?->id),
+            'featuredPost' => $featured ? $this->card($featured) : null,
+            'tags' => Tag::query()->orderBy('name')->get(['id', 'name', 'slug']),
+            'filters' => [
+                'search' => $search,
+                'sort' => $sort,
+                'tag' => $tag?->only(['name', 'slug']),
+            ],
+        ], Seo::forStatic(
+            title: $title,
+            description: $description,
+            path: $path,
+        ));
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, array<string, mixed>>
+     */
+    private function posts(Request $request, ?Tag $tag, ?int $excludeId): LengthAwarePaginator
+    {
+        $search = $request->string('search')->trim()->toString();
+        $sort = $request->string('sort')->toString() === 'popular' ? 'popular' : 'newest';
+
+        return Post::published()
+            ->with(['tags:id,name,slug', 'author:id,name'])
+            ->when($excludeId, function (Builder $query) use ($excludeId): void {
+                $query->whereKeyNot($excludeId);
+            })
+            ->when($tag, function (Builder $query) use ($tag): void {
+                $query->whereHas('tags', function (Builder $query) use ($tag): void {
+                    $query->whereKey($tag->id);
+                });
+            })
+            ->when($search !== '', function (Builder $query) use ($search): void {
+                $this->applySearch($query, $search);
+            })
+            ->when($sort === 'popular', function (Builder $query): void {
+                $query->orderByDesc('views_count')->latest('published_at');
+            }, function (Builder $query): void {
+                $query->latest('published_at');
+            })
             ->paginate(6)
             ->withQueryString()
-            ->through(fn (Post $post): array => [
-                'id' => $post->id,
-                'title' => $post->title,
-                'slug' => $post->slug,
-                'excerpt' => $post->excerpt,
-                'cover_image' => $post->cover_image,
-                'published_at' => $post->published_at,
-                'reading_time' => $post->reading_time,
-                'views_count' => $post->views_count,
-                'tags' => $post->tags,
-            ]);
+            ->through(fn (Post $post): array => $this->card($post));
+    }
+
+    /**
+     * @param  Builder<Post>  $query
+     */
+    private function applySearch(Builder $query, string $search): void
+    {
+        $like = '%'.addcslashes($search, '%_\\').'%';
+        $query->where(function (Builder $query) use ($like): void {
+            $query->where('title', 'like', $like)->orWhere('excerpt', 'like', $like);
+        });
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function card(Post $post): array
+    {
+        return [
+            'id' => $post->id,
+            'title' => $post->title,
+            'slug' => $post->slug,
+            'excerpt' => $post->excerpt,
+            'cover_image' => $post->cover_image,
+            'cover_url' => $post->cover_url,
+            'published_at' => $post->published_at,
+            'reading_time' => $post->reading_time,
+            'views_count' => $post->views_count,
+            'is_featured' => $post->is_featured,
+            'tags' => $post->tags,
+            'author' => $this->authorPayload($post->author),
+        ];
+    }
+
+    /**
+     * @return array{name: string, title: string|null, photo_path: string|null}
+     */
+    private function authorPayload(?User $user): array
+    {
+        $profile = Profile::instance();
+
+        return [
+            'name' => $user?->name ?: $profile->name,
+            'title' => $profile->title,
+            'photo_path' => $profile->photo_path,
+        ];
     }
 
     private function recordView(Request $request, Post $post): void

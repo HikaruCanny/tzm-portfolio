@@ -28,7 +28,11 @@ class ProfileController extends Controller
         );
 
         return Inertia::render('Admin/Profile/Edit', [
-            'profile' => $profile,
+            'profile' => [
+                ...$profile->toArray(),
+                'has_resume' => $profile->hasResume(),
+                'resume_url' => $profile->hasResume() ? route('resume.download') : null,
+            ],
         ]);
     }
 
@@ -44,14 +48,16 @@ class ProfileController extends Controller
             'goals' => 'nullable|string',
             'working_style' => 'nullable|string',
             'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:32',
             'github_url' => 'nullable|url',
             'linkedin_url' => 'nullable|url',
             'location' => 'nullable|string|max:255',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
             'resume' => 'nullable|file|mimes:pdf|max:5120',
+            'remove_resume' => 'nullable|boolean',
         ]);
 
-        unset($validated['photo'], $validated['resume']);
+        unset($validated['photo'], $validated['resume'], $validated['remove_resume']);
 
         $profile = Profile::firstOrCreate(
             ['id' => 1],
@@ -64,6 +70,11 @@ class ProfileController extends Controller
         if ($request->hasFile('photo')) {
             $this->images->delete($profile->photo_path);
             $validated['photo_path'] = $this->images->store($request->file('photo'), 'profile');
+        }
+
+        if ($request->boolean('remove_resume') && $profile->resume_path) {
+            $this->images->delete($profile->resume_path);
+            $validated['resume_path'] = null;
         }
 
         if ($request->hasFile('resume')) {

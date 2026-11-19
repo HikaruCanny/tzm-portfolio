@@ -28,7 +28,7 @@ class PostController extends Controller
         Gate::authorize('manage-portfolio');
 
         $posts = Post::query()
-            ->with('tags:id,name,slug')
+            ->with(['tags:id,name,slug', 'author:id,name'])
             ->latest()
             ->paginate(10)
             ->through(fn (Post $post): array => [
@@ -36,8 +36,10 @@ class PostController extends Controller
                 'title' => $post->title,
                 'slug' => $post->slug,
                 'status' => $post->status,
+                'is_featured' => $post->is_featured,
                 'published_at' => $post->published_at,
                 'views_count' => $post->views_count,
+                'author_name' => $post->author?->name,
                 'tags' => $post->tags,
             ]);
 
@@ -64,16 +66,20 @@ class PostController extends Controller
         $validated = $this->validated($request);
 
         $post = Post::query()->create([
+            'user_id' => $request->user()?->id,
             'title' => $validated['title'],
             'slug' => $this->uniqueSlug($validated['title']),
             'excerpt' => $validated['excerpt'],
+            'meta_description' => $validated['meta_description'] ?? null,
             'body_markdown' => $validated['body'],
             'status' => $validated['status'],
+            'is_featured' => $validated['is_featured'] ?? false,
             'cover_image' => $request->file('cover_image')
                 ? $this->images->store($request->file('cover_image'), 'posts/covers')
                 : null,
         ]);
 
+        $this->syncFeatured($post);
         $post->tags()->sync($validated['tag_ids'] ?? []);
 
         return redirect()->route('admin.posts.index')->with('success', 'Post saved.');
@@ -109,13 +115,17 @@ class PostController extends Controller
         }
 
         $post->update([
+            'user_id' => $post->user_id ?? $request->user()?->id,
             'title' => $validated['title'],
             'excerpt' => $validated['excerpt'],
+            'meta_description' => $validated['meta_description'] ?? null,
             'body_markdown' => $validated['body'],
             'status' => $validated['status'],
+            'is_featured' => $validated['is_featured'] ?? false,
             'cover_image' => $cover,
         ]);
 
+        $this->syncFeatured($post);
         $post->tags()->sync($validated['tag_ids'] ?? []);
 
         return redirect()->route('admin.posts.index')->with('success', 'Post updated.');
@@ -145,20 +155,43 @@ class PostController extends Controller
     }
 
     /**
-     * @return array{title: string, excerpt: string, body: string, status: string, tag_ids?: array<int, int>}
+     * @return array{
+     *     title: string,
+     *     excerpt: string,
+     *     meta_description?: string|null,
+     *     body: string,
+     *     status: string,
+     *     is_featured: bool,
+     *     tag_ids?: array<int, int>
+     * }
      */
     private function validated(Request $request): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:180',
             'excerpt' => 'required|string|max:500',
+            'meta_description' => 'nullable|string|max:180',
             'body' => 'required|string|max:50000',
             'status' => ['required', Rule::in(['draft', 'published'])],
+            'is_featured' => 'nullable|boolean',
             'tag_ids' => 'nullable|array',
             'tag_ids.*' => 'integer|exists:tags,id',
             'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
             'remove_cover' => 'nullable|boolean',
         ]);
+
+        $validated['is_featured'] = $request->boolean('is_featured');
+
+        return $validated;
+    }
+
+    private function syncFeatured(Post $post): void
+    {
+        if (! $post->is_featured) {
+            return;
+        }
+
+        Post::query()->whereKeyNot($post->id)->update(['is_featured' => false]);
     }
 
     private function uniqueSlug(string $title): string

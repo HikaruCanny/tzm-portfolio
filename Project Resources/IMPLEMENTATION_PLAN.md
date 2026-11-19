@@ -12,14 +12,14 @@
 
 | Phase | Name | Status | % (estimate) | Notes |
 |-------|------|--------|--------------|-------|
-| 0 | Content & design | PARTIAL | ~20% | Seeded/demo content in UI; no repo checklist artifact |
+| 0 | Content & design | PARTIAL | ~75% | `PortfolioContentSeeder` + `CONTENT_CHECKLIST.md`; photo/resume still manual |
 | 1 | Foundation | DONE | ~95% | Error pages, blog nav, theme, CI. Staging server deploy is still an ops task |
 | 2 | Data & admin | DONE | ~95% | Invites, roles, technologies, WebP uploads, activity log, superadmin 2FA gate |
 | 3 | Public pages | DONE | ~95% | Dedicated About/Experience/Skills/Services/Contact; SEO polish still Phase 7 |
 | 4 | Blog | DONE | ~95% | Posts/tags admin, public blog, RSS, highlighting; real content still Phase 0 |
 | 5 | Contact & notifications | PARTIAL | ~45% | Form + inbox + honeypot; no mail/Reverb/bell |
 | 6 | AI chatbot | NOT STARTED | 0% | — |
-| 7 | Polish & launch | NOT STARTED | ~5% | CI only; no SEO/ops bundle |
+| 7 | Polish & launch | PARTIAL | ~45% | Sitemap, robots, SEO, security headers; deploy/SSR/E2E pending |
 
 **Finished in code:** **Phase 1**, **Phase 2**, **Phase 3**, and **Phase 4**. Staging hosting is the only Phase 1 item left, and it needs a server.
 
@@ -33,12 +33,12 @@
 
 | Task | Status | Evidence |
 |------|--------|----------|
-| Real content checklist (HLD §16) | NOT STARTED | No tracked checklist in repo |
-| Placeholder policy for production | PARTIAL | Empty states exist; seeder uses demo copy |
-| Design tokens (indigo, Inter, etc.) | PARTIAL | Indigo + Tailwind in `PublicLayout`, pages |
+| Real content checklist (HLD §16) | DONE | `Project Resources/CONTENT_CHECKLIST.md` |
+| Placeholder policy for production | DONE | Documented in checklist; fictional testimonials flagged |
+| Design tokens (indigo, Inter, etc.) | DONE | Navy primary in `app.css` / `tailwind.config.js`; `config/portfolio.php` |
 | Wireframes / prototype alignment | PARTIAL | HLD links prototype; UI matches direction |
 
-**Remaining:** TZM-supplied content; replace demo defaults; lock accent/fonts in theme config.
+**Remaining:** Upload photo + resume; replace sample testimonials/posts with your live links and copy (`PORTFOLIO_*` in `.env` or admin).
 
 ---
 
@@ -139,6 +139,7 @@
 | Code highlighting, RSS `/feed.xml` | DONE | highlight.js on article page; `FeedController` |
 | Home latest posts strip + Blog nav | DONE | `Welcome.vue` + `PublicLayout` |
 | Feature tests | DONE | `tests/Feature/BlogTest.php` |
+| Author byline, featured hero, SEO fields, view sort | DONE | `user_id`, `is_featured`, `meta_description` |
 
 ---
 
@@ -149,12 +150,12 @@
 | Validated contact form | DONE | `ContactController` |
 | Throttle | DONE | `throttle:5,1` on route |
 | Honeypot + `is_spam` | DONE | `_hp` field + tests |
-| Email notification on new message | NOT STARTED | No Mailable/Event |
-| `NewContactMessage` event + queue listener | NOT STARTED | |
-| Database notifications + bell + Echo/Reverb | NOT STARTED | |
-| Admin reply + `contact_replies` | NOT STARTED | |
-| Mark handled + filter spam in inbox | PARTIAL | `handled_at` column; UI not wired |
-| Resume PDF managed + download | PARTIAL | Column on profile; direct href only |
+| Email notification on new message | DONE | `NewContactMessageNotification` (mail + database) |
+| `NewContactMessage` event + queue listener | DONE | `SendNewContactMessageNotifications` (queued) |
+| Database notifications + bell + Echo/Reverb | PARTIAL | Bell + shared counts in `AdminLayout`; Echo/Reverb optional |
+| Admin reply + `contact_replies` | DONE | `ContactMessageReply` mailable + admin reply form |
+| Mark handled + filter spam in inbox | DONE | Filters + `handled_at` / spam UI in `Admin/Messages/Index` |
+| Resume PDF managed + download | DONE | Superadmin upload/remove; `/resume` + `has_resume` on public pages |
 
 ---
 
@@ -171,10 +172,10 @@
 | Task | Status | Evidence |
 |------|--------|----------|
 | CI (Pest, Pint, npm check) | DONE | `composer ci:check` |
-| `sitemap.xml`, `robots.txt`, `feed.xml` | NOT STARTED | |
-| Per-page meta / OG / JSON-LD | PARTIAL | Inertia `<Head title>` only |
+| `sitemap.xml`, `robots.txt`, `feed.xml` | PARTIAL | Sitemap + robots + existing RSS feed |
+| Per-page meta / OG / JSON-LD | DONE | `Seo` + Blade shell + `StructuredData` |
 | Inertia SSR | NOT STARTED | |
-| Security headers middleware | NOT STARTED | |
+| Security headers middleware | DONE | `SecurityHeaders` on web stack |
 | Backups, monitoring, production deploy | NOT STARTED | |
 | Playwright E2E | NOT STARTED | |
 

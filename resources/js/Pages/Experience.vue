@@ -20,10 +20,20 @@ const props = withDefaults(defineProps<{
 }>(), {
     experiences: () => [],
 });
+
+const skillTone = (index: number): string => `skill-tone-${index % 6}`;
+
+const period = (item: ExperienceItem): string => {
+    const start = item.start_date.substring(0, 7);
+    const end = item.end_date ? item.end_date.substring(0, 7) : 'Present';
+
+    return `${start} – ${end}`;
+};
 </script>
 
 <template>
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12">
+    <div class="section-bg-a">
+    <div class="mx-auto max-w-4xl space-y-12 px-4 py-16 sm:px-6 lg:px-8">
         <Head title="Experience & Education – TZM" />
 
         <div class="space-y-4">
@@ -35,42 +45,62 @@ const props = withDefaults(defineProps<{
             </p>
         </div>
 
-        <div v-if="props.experiences.length > 0" class="relative border-l-2 border-indigo-200 dark:border-indigo-950 ml-4 space-y-10 pl-6">
+        <div v-if="props.experiences.length > 0" class="relative">
             <div
-                v-for="item in props.experiences"
-                :key="item.id"
-                class="relative group"
-            >
-                <!-- Dot -->
-                <div class="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full bg-white dark:bg-slate-950 border-2 border-indigo-600 dark:border-indigo-400 group-hover:scale-125 transition-transform"></div>
+                aria-hidden="true"
+                class="absolute bottom-0 left-6 top-0 w-0.5 -translate-x-1/2 rounded-full bg-gradient-to-b from-primary-600 to-primary-300 dark:from-primary-400 dark:to-primary-200"
+            />
 
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm hover:border-indigo-500/50 transition-colors space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300">
-                            <Briefcase v-if="item.type === 'work'" class="w-3.5 h-3.5" />
-                            <GraduationCap v-else-if="item.type === 'education'" class="w-3.5 h-3.5" />
-                            <Award v-else class="w-3.5 h-3.5" />
-                            <span>{{ item.role }}</span>
-                        </span>
-                        <span class="flex items-center gap-1 text-xs text-slate-500">
-                            <Calendar class="w-3.5 h-3.5" />
-                            <span>{{ item.start_date.substring(0, 7) }} – {{ item.end_date ? item.end_date.substring(0, 7) : 'Present' }}</span>
-                        </span>
+            <div class="space-y-8">
+                <article
+                    v-for="(item, experienceIndex) in props.experiences"
+                    :key="item.id"
+                    class="relative flex gap-6 sm:gap-8"
+                >
+                    <div class="relative z-10 flex w-12 shrink-0 justify-center pt-6">
+                        <div
+                            aria-hidden="true"
+                            class="flex h-5 w-5 items-center justify-center rounded-full border-2 border-primary-600 bg-white shadow-sm dark:border-primary-400 dark:bg-slate-950"
+                        >
+                            <span class="h-2 w-2 rounded-full bg-primary-600 dark:bg-primary-400" />
+                        </div>
                     </div>
 
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">
-                        {{ item.organization }}
-                    </h3>
+                    <div class="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-primary-500/40 sm:p-6">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span :class="['inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold uppercase tracking-wide', skillTone(experienceIndex)]">
+                                <Briefcase v-if="item.type === 'work'" class="h-3.5 w-3.5" />
+                                <GraduationCap v-else-if="item.type === 'education'" class="h-3.5 w-3.5" />
+                                <Award v-else class="h-3.5 w-3.5" />
+                                <span>{{ item.role }}</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1 text-xs text-slate-500">
+                                <Calendar class="h-3.5 w-3.5" />
+                                {{ period(item) }}
+                            </span>
+                        </div>
 
-                    <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line">
-                        {{ item.description }}
-                    </p>
-                </div>
+                        <h3 class="mt-3 text-lg font-bold text-slate-900 dark:text-white">
+                            {{ item.organization }}
+                        </h3>
+
+                        <p
+                            v-if="item.description"
+                            class="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-600 dark:text-slate-400"
+                        >
+                            {{ item.description }}
+                        </p>
+                    </div>
+                </article>
             </div>
         </div>
 
-        <div v-else class="text-center py-12 text-slate-500 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <div
+            v-else
+            class="rounded-2xl border border-slate-200 bg-white py-12 text-center text-slate-500 dark:border-slate-800 dark:bg-slate-900"
+        >
             <p>No timeline milestones recorded yet.</p>
         </div>
+    </div>
     </div>
 </template>

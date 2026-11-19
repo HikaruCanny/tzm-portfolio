@@ -6,21 +6,24 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ExperienceController as AdminExperienceController;
 use App\Http\Controllers\Admin\InvitationController as AdminInvitationController;
 use App\Http\Controllers\Admin\MessageController as AdminMessageController;
+use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
+use App\Http\Controllers\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\ProjectController as AdminProjectController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\SkillController as AdminSkillController;
+use App\Http\Controllers\Admin\TagController as AdminTagController;
 use App\Http\Controllers\Admin\TechnologyController as AdminTechnologyController;
 use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\PostController as AdminPostController;
-use App\Http\Controllers\Admin\TagController as AdminTagController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\RobotsController;
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -46,6 +49,8 @@ Route::post('/contact', [ContactController::class, 'store'])->middleware('thrott
 Route::get('/resume', [PortfolioController::class, 'resume'])->name('resume.download');
 
 Route::get('/feed.xml', [FeedController::class, 'index'])->name('feed');
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+Route::get('/robots.txt', RobotsController::class)->name('robots');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog');
 Route::get('/blog/tag/{tag:slug}', [BlogController::class, 'tag'])->name('blog.tag');
 Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.post');
@@ -117,8 +122,14 @@ Route::middleware(['auth', 'admin', 'can:manage-portfolio'])->prefix('admin')->n
 
     // Messages
     Route::get('messages', [AdminMessageController::class, 'index'])->name('messages.index');
+    Route::patch('messages/read-all', [AdminMessageController::class, 'markAllAsRead'])->name('messages.read-all');
     Route::patch('messages/{message}/read', [AdminMessageController::class, 'markAsRead'])->name('messages.read');
+    Route::patch('messages/{message}/handled', [AdminMessageController::class, 'markAsHandled'])->name('messages.handled');
+    Route::post('messages/{message}/reply', [AdminMessageController::class, 'reply'])->name('messages.reply');
     Route::delete('messages/{message}', [AdminMessageController::class, 'destroy'])->name('messages.destroy');
+
+    Route::patch('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::patch('notifications/{notification}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
 
     // Superadmin only: Profile & Settings
     Route::middleware(['admin:superadmin', 'can:manage-site'])->group(function () {

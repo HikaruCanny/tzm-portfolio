@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import GithubIcon from '@/components/icons/GithubIcon.vue';
 import LinkedinIcon from '@/components/icons/LinkedinIcon.vue';
-import { ref, onMounted } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { computed, ref, onMounted } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
 import { 
     Sun, 
     Moon, 
@@ -17,8 +17,11 @@ import {
     Layers
 } from '@lucide/vue';
 
+const page = usePage();
 const isDark = ref(false);
 const mobileMenuOpen = ref(false);
+
+const portfolio = computed(() => page.props.portfolio as { has_resume?: boolean; resume_url?: string | null } | undefined);
 
 const navLinks = [
     { name: 'Home', href: '/' },
@@ -62,16 +65,16 @@ const scrollToTop = () => {
 </script>
 
 <template>
-    <div class="min-h-screen scroll-smooth bg-slate-50 text-slate-800 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100 flex flex-col font-sans">
+    <div class="min-h-screen scroll-smooth bg-transparent text-slate-800 transition-colors duration-200 dark:text-slate-100 flex flex-col font-sans">
         <!-- Sticky Navbar -->
-        <header class="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <header class="sticky top-0 z-50 border-b border-stone-200/80 bg-[color:var(--section-a)] transition-colors dark:border-white/10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                 <!-- Logo -->
                 <Link href="/" class="flex items-center gap-2 group">
-                    <span class="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
+                    <span class="w-9 h-9 rounded-lg bg-primary-600 text-white flex items-center justify-center font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
                         T
                     </span>
-                    <span class="font-bold text-xl tracking-tight bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+                    <span class="font-bold text-xl tracking-tight bg-gradient-to-r from-primary-700 to-primary-500 dark:from-primary-300 dark:to-primary-400 bg-clip-text text-transparent">
                         TZM.dev
                     </span>
                 </Link>
@@ -82,9 +85,17 @@ const scrollToTop = () => {
                         v-for="link in navLinks"
                         :key="link.name"
                         :href="link.href"
-                        class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all"
+                        class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-primary-700 dark:text-slate-300 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-all"
                     >
                         {{ link.name }}
+                    </a>
+                    <a
+                        v-if="portfolio?.has_resume"
+                        :href="portfolio.resume_url ?? '/resume'"
+                        download
+                        class="px-3 py-2 rounded-md text-sm font-medium text-primary-700 hover:text-primary-800 dark:text-primary-300 dark:hover:text-primary-200 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-all"
+                    >
+                        Resume
                     </a>
                 </nav>
 
@@ -123,15 +134,24 @@ const scrollToTop = () => {
             </div>
 
             <!-- Mobile Dropdown -->
-            <div v-show="mobileMenuOpen" class="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 pt-2 pb-4 space-y-1">
+            <div v-show="mobileMenuOpen" class="md:hidden border-b border-stone-200 bg-[color:var(--section-a)] px-4 pt-2 pb-4 space-y-1 dark:border-white/10">
                 <a
                     v-for="link in navLinks"
                     :key="link.name"
                     :href="link.href"
                     @click="mobileMenuOpen = false"
-                    class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-primary-50 dark:hover:bg-primary-950/50 hover:text-primary-700 dark:hover:text-primary-300"
                 >
                     {{ link.name }}
+                </a>
+                <a
+                    v-if="portfolio?.has_resume"
+                    :href="portfolio.resume_url ?? '/resume'"
+                    download
+                    class="block px-3 py-2 rounded-md text-base font-medium text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-950/50"
+                    @click="mobileMenuOpen = false"
+                >
+                    Resume
                 </a>
                 <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
                     <a
@@ -153,10 +173,10 @@ const scrollToTop = () => {
         </main>
 
         <!-- Footer -->
-        <footer class="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-10 transition-colors">
+        <footer class="border-t border-stone-200/80 bg-[color:var(--section-a)] py-10 transition-colors dark:border-white/10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="flex items-center gap-3">
-                    <span class="w-7 h-7 rounded bg-indigo-600 text-white font-bold flex items-center justify-center text-sm">
+                    <span class="w-7 h-7 rounded bg-primary-600 text-white font-bold flex items-center justify-center text-sm">
                         T
                     </span>
                     <span class="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -169,7 +189,7 @@ const scrollToTop = () => {
                         href="https://github.com"
                         target="_blank"
                         rel="noreferrer"
-                        class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        class="hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
                         aria-label="GitHub"
                     >
                         <GithubIcon class="w-5 h-5" />
@@ -178,7 +198,7 @@ const scrollToTop = () => {
                         href="https://linkedin.com"
                         target="_blank"
                         rel="noreferrer"
-                        class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        class="hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
                         aria-label="LinkedIn"
                     >
                         <LinkedinIcon class="w-5 h-5" />

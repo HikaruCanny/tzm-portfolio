@@ -27,6 +27,9 @@ const props = withDefaults(defineProps<{
     services: () => [],
 });
 
+const purpleIconTone = (index: number): string => `skill-tone-${index % 3}`;
+const titleCyan = 'text-cyan-700 transition-colors hover:text-cyan-800 dark:text-cyan-300 dark:hover:text-cyan-200';
+
 const getServiceIcon = (iconName?: string) => {
     switch (iconName) {
         case 'LayoutDashboard': return LayoutDashboard;
@@ -41,6 +44,7 @@ const getServiceIcon = (iconName?: string) => {
 </script>
 
 <template>
+    <div class="section-bg-c">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12">
         <Head title="What I Can Build – TZM" />
 
@@ -55,15 +59,15 @@ const getServiceIcon = (iconName?: string) => {
 
         <div v-if="props.services.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div
-                v-for="service in props.services"
+                v-for="(service, serviceIndex) in props.services"
                 :key="service.id"
-                class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:border-indigo-500/50 hover:shadow-md transition-all space-y-4"
+                class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:border-primary-400/70 hover:shadow-md transition-all space-y-4"
             >
-                <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <div :class="['flex h-12 w-12 items-center justify-center rounded-xl', purpleIconTone(serviceIndex)]">
                     <component :is="getServiceIcon(service.icon)" class="w-6 h-6" />
                 </div>
 
-                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                <h3 :class="['text-xl font-bold', titleCyan]">
                     {{ service.title }}
                 </h3>
 
@@ -80,11 +84,12 @@ const getServiceIcon = (iconName?: string) => {
         <div class="pt-8 text-center">
             <Link
                 href="/contact"
-                class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-indigo-600 text-white font-bold shadow-lg hover:bg-indigo-700 transition-all"
+                class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-primary-600 text-white font-bold shadow-lg hover:bg-primary-500 transition-all"
             >
                 <span>Discuss Your Project</span>
                 <ArrowRight class="w-4 h-4" />
             </Link>
         </div>
+    </div>
     </div>
 </template>

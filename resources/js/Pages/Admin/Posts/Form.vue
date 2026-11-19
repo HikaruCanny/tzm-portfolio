@@ -17,8 +17,10 @@ interface PostRecord {
     id: number;
     title: string;
     excerpt: string;
+    meta_description?: string | null;
     body_markdown: string;
     status: string;
+    is_featured?: boolean;
     cover_image?: string | null;
     tags?: TagOption[];
 }
@@ -36,8 +38,10 @@ const previewing = ref(false);
 const form = useForm({
     title: props.post?.title || '',
     excerpt: props.post?.excerpt || '',
+    meta_description: props.post?.meta_description || '',
     body: props.post?.body_markdown || '',
     status: props.post?.status || 'draft',
+    is_featured: props.post?.is_featured ? true : false,
     tag_ids: props.post?.tags?.map((tag) => tag.id) || ([] as number[]),
     cover_image: null as File | null,
     remove_cover: false,
@@ -114,6 +118,19 @@ const fileName = (path: string): string => path.split('/').pop() ?? path;
                 <p v-if="form.errors.excerpt" class="text-xs text-red-600">{{ form.errors.excerpt }}</p>
             </div>
 
+            <div class="space-y-1.5">
+                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">SEO description</label>
+                <textarea
+                    v-model="form.meta_description"
+                    rows="2"
+                    maxlength="180"
+                    placeholder="Optional. Used for search and social previews. Falls back to the excerpt."
+                    class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                />
+                <p class="text-xs text-slate-400">{{ form.meta_description.length }}/180</p>
+                <p v-if="form.errors.meta_description" class="text-xs text-red-600">{{ form.errors.meta_description }}</p>
+            </div>
+
             <div class="grid gap-6 lg:grid-cols-2">
                 <div class="space-y-1.5">
                     <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Body (Markdown)</label>
@@ -167,6 +184,18 @@ const fileName = (path: string): string => path.split('/').pop() ?? path;
                         </p>
                     </div>
                 </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input
+                    id="is_featured"
+                    v-model="form.is_featured"
+                    type="checkbox"
+                    class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <label for="is_featured" class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Feature as the hero article on the blog
+                </label>
             </div>
 
             <div class="space-y-3">
