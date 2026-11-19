@@ -75,7 +75,7 @@ test('experience admin list shows ten entries per page', function () {
         );
 });
 
-test('message inbox shows fifteen messages per page', function () {
+test('message inbox shows ten messages per page', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
     foreach (range(1, 16) as $index) {
@@ -90,7 +90,7 @@ test('message inbox shows fifteen messages per page', function () {
         ->get('/admin/messages')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->has('messages.data', 15)
-            ->where('messages.per_page', 15)
+            ->has('messages.data', 10)
+            ->where('messages.per_page', 10)
         );
 });

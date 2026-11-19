@@ -122,9 +122,12 @@ Route::middleware(['auth', 'admin', 'can:manage-portfolio'])->prefix('admin')->n
 
     // Messages
     Route::get('messages', [AdminMessageController::class, 'index'])->name('messages.index');
+    Route::post('messages/bulk', [AdminMessageController::class, 'bulk'])->name('messages.bulk');
     Route::patch('messages/read-all', [AdminMessageController::class, 'markAllAsRead'])->name('messages.read-all');
     Route::patch('messages/{message}/read', [AdminMessageController::class, 'markAsRead'])->name('messages.read');
     Route::patch('messages/{message}/handled', [AdminMessageController::class, 'markAsHandled'])->name('messages.handled');
+    Route::patch('messages/{message}/archive', [AdminMessageController::class, 'archive'])->name('messages.archive');
+    Route::patch('messages/{message}/unarchive', [AdminMessageController::class, 'unarchive'])->name('messages.unarchive');
     Route::post('messages/{message}/reply', [AdminMessageController::class, 'reply'])->name('messages.reply');
     Route::delete('messages/{message}', [AdminMessageController::class, 'destroy'])->name('messages.destroy');
 

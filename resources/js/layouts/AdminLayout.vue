@@ -210,17 +210,17 @@ const isActive = (href: string) => {
                                         v-for="note in adminMeta.recent_notifications"
                                         :key="note.id"
                                         :href="note.data.url ?? '/admin/messages'"
-                                        class="block border-b border-slate-50 px-4 py-3 text-left hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/80"
+                                        class="block min-w-0 border-b border-slate-50 px-4 py-3 text-left hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/80"
                                         :class="note.read_at ? 'opacity-70' : ''"
                                         @click="!note.read_at && markNotificationRead(note.id)"
                                     >
-                                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                                        <p class="break-words text-xs font-semibold text-slate-800 dark:text-slate-100">
                                             {{ note.data.name ?? 'New contact message' }}
                                         </p>
-                                        <p v-if="note.data.subject" class="text-xs text-slate-500 truncate">
+                                        <p v-if="note.data.subject" class="truncate text-xs text-slate-500">
                                             {{ note.data.subject }}
                                         </p>
-                                        <p class="text-xs text-slate-500 mt-1 line-clamp-2">
+                                        <p class="mt-1 line-clamp-2 break-words text-xs text-slate-500">
                                             {{ note.data.excerpt }}
                                         </p>
                                     </Link>

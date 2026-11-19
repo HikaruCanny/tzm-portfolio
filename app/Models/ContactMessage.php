@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $ip_hash
  * @property Carbon|null $read_at
  * @property Carbon|null $handled_at
+ * @property Carbon|null $archived_at
  * @property bool $is_spam
  */
 class ContactMessage extends Model
@@ -27,12 +28,14 @@ class ContactMessage extends Model
         'ip_hash',
         'read_at',
         'handled_at',
+        'archived_at',
         'is_spam',
     ];
 
     protected $casts = [
         'read_at' => 'datetime',
         'handled_at' => 'datetime',
+        'archived_at' => 'datetime',
         'is_spam' => 'boolean',
     ];
 
@@ -54,6 +57,16 @@ class ContactMessage extends Model
     public function scopeHandled($query)
     {
         return $query->whereNotNull('handled_at')->notSpam();
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->whereNull('archived_at');
+    }
+
+    public function scopeArchived($query)
+    {
+        return $query->whereNotNull('archived_at');
     }
 
     public function replies(): HasMany

@@ -90,6 +90,78 @@ test('admin can filter inbox views', function () {
         ->assertInertia(fn ($page) => $page->has('messages.data', 1)->where('messages.data.0.name', 'Done'));
 });
 
+test('archived messages are hidden from all filter and bulk archive works', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    $active = ContactMessage::query()->create([
+        'name' => 'Active Visitor',
+        'email' => 'active@example.com',
+        'message' => 'Still visible',
+        'is_spam' => false,
+    ]);
+
+    $archived = ContactMessage::query()->create([
+        'name' => 'Archived Visitor',
+        'email' => 'archived@example.com',
+        'message' => 'In archive',
+        'is_spam' => false,
+        'archived_at' => now(),
+    ]);
+
+    $this->actingAs($admin)
+        ->get('/admin/messages')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('messages.data', 1)
+            ->where('messages.data.0.id', $active->id)
+        );
+
+    $this->actingAs($admin)
+        ->get('/admin/messages?filter=archived')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('messages.data', 1)
+            ->where('messages.data.0.id', $archived->id)
+        );
+
+    $this->actingAs($admin)
+        ->post('/admin/messages/bulk', [
+            'action' => 'archive',
+            'ids' => [$active->id],
+        ])
+        ->assertRedirect();
+
+    expect($active->fresh()->archived_at)->not->toBeNull();
+});
+
+test('admin inbox search filters by name email or message', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    ContactMessage::query()->create([
+        'name' => 'Unique Searchable Visitor',
+        'email' => 'findme@example.com',
+        'subject' => 'Partnership',
+        'message' => 'Looking for collaboration.',
+        'is_spam' => false,
+    ]);
+
+    ContactMessage::query()->create([
+        'name' => 'Someone Else',
+        'email' => 'other@example.com',
+        'message' => 'Hello.',
+        'is_spam' => false,
+    ]);
+
+    $this->actingAs($admin)
+        ->get('/admin/messages?q=Searchable')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('search', 'Searchable')
+            ->has('messages.data', 1)
+            ->where('messages.data.0.name', 'Unique Searchable Visitor')
+        );
+});
+
 test('admin can mark message handled and reply by email', function () {
     Mail::fake();
 

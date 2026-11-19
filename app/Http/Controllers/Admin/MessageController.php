@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\BulkContactMessageRequest;
 use App\Http\Requests\Admin\ReplyToContactMessageRequest;
 use App\Mail\ContactMessageReply;
 use App\Models\ContactMessage;
@@ -18,7 +19,7 @@ class MessageController extends Controller
     {
         $filter = $request->string('filter', 'all')->toString();
 
-        if (! in_array($filter, ['all', 'unread', 'spam', 'handled'], true)) {
+        if (! in_array($filter, ['all', 'unread', 'spam', 'handled', 'archived'], true)) {
             $filter = 'all';
         }
 
@@ -27,15 +28,28 @@ class MessageController extends Controller
             ->latest();
 
         match ($filter) {
-            'unread' => $query->unread(),
+            'unread' => $query->unread()->active(),
             'spam' => $query->spam(),
-            'handled' => $query->handled(),
-            default => $query,
+            'handled' => $query->handled()->active(),
+            'archived' => $query->archived(),
+            default => $query->active(),
         };
 
+        $search = $request->string('q')->trim()->toString();
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder
+                    ->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%')
+                    ->orWhere('subject', 'like', '%'.$search.'%')
+                    ->orWhere('message', 'like', '%'.$search.'%');
+            });
+        }
+
         return Inertia::render('Admin/Messages/Index', [
-            'messages' => $query->paginate(15)->withQueryString(),
+            'messages' => $query->paginate(10)->withQueryString(),
             'filter' => $filter,
+            'search' => $search,
         ]);
     }
 
@@ -48,7 +62,7 @@ class MessageController extends Controller
 
     public function markAllAsRead(): RedirectResponse
     {
-        ContactMessage::query()->unread()->update(['read_at' => now()]);
+        ContactMessage::query()->unread()->active()->update(['read_at' => now()]);
 
         return back()->with('success', 'All unread messages marked as read.');
     }
@@ -61,6 +75,56 @@ class MessageController extends Controller
         ]);
 
         return back()->with('success', 'Message marked as handled.');
+    }
+
+    public function archive(ContactMessage $message): RedirectResponse
+    {
+        $message->update([
+            'archived_at' => now(),
+            'read_at' => $message->read_at ?? now(),
+        ]);
+
+        return back()->with('success', 'Message archived.');
+    }
+
+    public function unarchive(ContactMessage $message): RedirectResponse
+    {
+        $message->update(['archived_at' => null]);
+
+        return back()->with('success', 'Message restored from archive.');
+    }
+
+    public function bulk(BulkContactMessageRequest $request): RedirectResponse
+    {
+        $action = $request->validated('action');
+        $ids = $request->validated('ids');
+
+        $query = ContactMessage::query()->whereIn('id', $ids);
+        $count = $query->count();
+
+        match ($action) {
+            'read' => $query->update(['read_at' => now()]),
+            'handled' => $query->notSpam()->update([
+                'handled_at' => now(),
+                'read_at' => now(),
+            ]),
+            'archive' => $query->update([
+                'archived_at' => now(),
+                'read_at' => now(),
+            ]),
+            'unarchive' => $query->update(['archived_at' => null]),
+            'delete' => $query->delete(),
+        };
+
+        $label = match ($action) {
+            'read' => 'marked as read',
+            'handled' => 'marked as handled',
+            'archive' => 'archived',
+            'unarchive' => 'restored',
+            'delete' => 'deleted',
+        };
+
+        return back()->with('success', "{$count} message(s) {$label}.");
     }
 
     public function reply(ReplyToContactMessageRequest $request, ContactMessage $message): RedirectResponse
