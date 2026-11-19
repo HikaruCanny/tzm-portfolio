@@ -217,13 +217,14 @@ onMounted(async () => {
             class="aspect-[16/9] w-full rounded-2xl border border-slate-200 object-cover dark:border-slate-800"
         />
 
-        <div v-if="post.toc.length" class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+        <div
+            v-if="post.toc.length"
+            class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5"
+        >
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">On this page</p>
             <ul class="mt-3 space-y-2 text-sm">
                 <li v-for="item in post.toc" :key="item.id" :class="item.level === 3 ? 'pl-4' : ''">
-                    <a :href="`#${item.id}`" class="text-slate-700 hover:text-primary-600 hover:underline dark:text-slate-300 dark:hover:text-primary-300">
-                        {{ item.text }}
-                    </a>
+                    <a :href="`#${item.id}`" :class="[titleCyan, 'no-underline hover:underline hover:underline-offset-2']">{{ item.text }}</a>
                 </li>
             </ul>
         </div>
